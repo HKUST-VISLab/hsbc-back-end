@@ -1,0 +1,4 @@
+# HSBCBackend changelog
+
+## 2015-11-09 0.1
+* Init project.
