@@ -1,3 +1,5 @@
+# 2016-11-09 This is an example to fetch the weather directly from Hong Kong Observatory platform.
+
 import urllib2
 import time
 
