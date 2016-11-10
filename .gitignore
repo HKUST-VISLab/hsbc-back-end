@@ -7,3 +7,6 @@ MANIFEST
 # User-specific stuff:
 .idea
 
+# logs
+*.log
+
