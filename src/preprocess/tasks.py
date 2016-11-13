@@ -2,22 +2,22 @@
 Tasks for preprocessing
 """
 
-from src import preprocess
-from src.preprocess import weather_data_helper
-from src.utils import Logger as Logger
+from src.preprocess.weather_data_helper import fetch_and_store_weather_data
+from src.utils import Logger, task_thread
 import time
+
+CURRENT_INTERVAL = 600
+FORECAST_INTERVAL = 3600*12
+
+TOTAL_RUNNING_TIME = 3600*24*7
 
 if __name__ == '__main__':
     tasks = []
-    tasks.append(weather_data_helper.fetch_and_store_weather_data)
-    logger = Logger("tasks.py", "tasks.log")
-    logger.info("Tasks start")
-    start_time = time.time()
-    end_time = time.time()-start_time
-    while(end_time < 3600):
-        for task in tasks:
-            task()
-        logger.info("finishing a round of tasks.")
-        time.sleep(10*60)
-        end_time = time.time()-start_time
-    logger.info("ending process.")
+    tasks.append(task_thread(fetch_and_store_weather_data, False, CURRENT_INTERVAL, TOTAL_RUNNING_TIME))
+    tasks.append(task_thread(fetch_and_store_weather_data, True, FORECAST_INTERVAL, TOTAL_RUNNING_TIME))
+    for task in tasks:
+        task.start()
+    time.sleep(TOTAL_RUNNING_TIME)
+    for task in tasks:
+        task.join(0.1)
+
