@@ -99,15 +99,20 @@ class MongoCollection:
         """
         self.__collection.replace_one(query, replace_data, upsert)
 
-    def find(self, query, projection, limit=None, skip=None, sort=None):
+    def find(self, query, projection=None, limit=None, skip=None, sort=None):
         """Find documents according to the query
         """
         return self.__collection.find(query, projection, skip, limit, sort=sort)
 
     def find_one(self, query):
-        """Find one document aoccording to the query
+        """Find one document according to the query
         """
         return self.__collection.find_one(query)
+
+    def find_one_and_update(self, query, update, projection=None, sort=None):
+        """Find one document according to the query and do update
+        """
+        return self.__collection.find_one_and_update(query, update, projection, sort)
 
     def count(self, query, limit=None, skip=None):
         """Get the number of documents in this collection.

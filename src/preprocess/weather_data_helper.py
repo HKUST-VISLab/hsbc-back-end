@@ -18,6 +18,7 @@ STATION_CONFIG_DIR = 'config/station_config.json'
 FULL_STATION_CONFIG_DIR = 'config/full_station_config.json'
 FORECAST_STATION_CONFIG_DIR = 'config/forecast_station_config.json'
 DB_CONFIG_DIR = 'config/db_config.json'
+WEATHER_CODE_DIR = 'config/weather_code.json'
 
 # Constants
 ERROR_FETCH = 1
@@ -233,15 +234,27 @@ def fetch_full_weather_data():
     return data
 
 
-def create_statation_collection():
+def create_basic_collection():
     """
     Create a collection containing configuration information for stations
     :return:
     """
     db_handler = _create_db_handler()
-    collection = db_handler.get_collection(_db_config['weather_db']['collections']['station'])
+    collection_name = _db_config['weather_db']['collections']['station']
+    db_handler.drop_collection(collection_name)
+    collection = db_handler.get_collection(collection_name)
     for station in _full_station_config['Stations']:
+        station['has_forecast'] = False
+        station['station_code'] = station.pop("StationCode")
         collection.replace_one(station, station, True)
+    for station in _forecast_config:
+        collection.update_many({'station_code': station.lower()}, {'$set': {'has_forecast': True}})
+
+    code_collection = db_handler.get_collection(_db_config['weather_db']['collections']['weather_code'])
+    _weather_code = utils.parse_json_file(WEATHER_CODE_DIR)
+    for code, info in _weather_code['weather_code'].items():
+        info["code"] = code
+        code_collection.replace_one({"code":code}, info, True)
 
 
 def _create_db_handler():
@@ -259,4 +272,5 @@ if __name__ == '__main__':
     # # fecth_weather_data_of_site(2207)
     # data_list = fetch_weather_data()
     # print(a)
-    fetch_and_store_weather_data(True)
+    # fetch_and_store_weather_data(True)
+    create_basic_collection()

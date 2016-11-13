@@ -21,6 +21,13 @@ class Logger:
     _log_format = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
 
     def __init__(self, name, filename=None, formatter=_log_format, level=logging.INFO):
+        """
+
+        :param name: logger name
+        :param filename: logging file, "mmddHHMM.log" by default
+        :param formatter:
+        :param level:
+        """
         if filename is None:
             current_str = time.strftime("%m%d％H％M", time.localtime())
             filename = current_str+'.log'
