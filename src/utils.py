@@ -7,9 +7,11 @@ import json
 import codecs
 import urllib
 import time
+import threading
 from urllib import request, error
 from urllib.error import HTTPError, URLError
 import csv
+import re
 
 
 class Logger:
@@ -70,6 +72,11 @@ def parse_csv_file(fp_or_filename, has_title=False, has_header=False, encoding='
     return data
 
 
+def camel2snake(name):
+    s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+    return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+
+
 def safe_open_url(path):
 
     try:
@@ -84,3 +91,28 @@ def safe_open_url(path):
         return data
     else:
         return response
+
+
+def task_thread(func, sleep_time, stop_time, args):
+    def task(func, args):
+        start_time = time.time()
+        while(time.time() - start_time < stop_time):
+            func(args)
+            time.sleep(sleep_time)
+        return 0
+    return threading.Thread(target=task, args=(func, args))
+
+if __name__ == '__main__':
+    def _test_hello(name):
+        print('Hello, '+name)
+
+    p = task_thread(_test_hello, 5, 15, 'ming')
+    p.start()
+    print('hi')
+    time.sleep(5)
+    print(p, p.is_alive())
+    time.sleep(5)
+    print(p, p.is_alive())
+    print('bye')
+    p.join(2)
+    print('bye')

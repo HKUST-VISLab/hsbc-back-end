@@ -6,6 +6,7 @@
     "collections": {
       "current": "current_weather",
       "forecast": "forecast_weather",
+      "forecast_hourly": "forecast_weather_hourly",
       "station": "station"
     }
   }

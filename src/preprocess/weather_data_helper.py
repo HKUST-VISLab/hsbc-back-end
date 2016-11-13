@@ -16,7 +16,7 @@ import time
 # Configurations
 STATION_CONFIG_DIR = 'config/station_config.json'
 FULL_STATION_CONFIG_DIR = 'config/full_station_config.json'
-FORECAST_STATION_CONFIG_DIR = 'config/station_config.json'
+FORECAST_STATION_CONFIG_DIR = 'config/forecast_station_config.json'
 DB_CONFIG_DIR = 'config/db_config.json'
 
 # Constants
@@ -29,24 +29,6 @@ _db_config = utils.parse_json_file(DB_CONFIG_DIR)
 _station_config = utils.parse_json_file(STATION_CONFIG_DIR)
 _full_station_config = utils.parse_json_file(FULL_STATION_CONFIG_DIR)
 _forecast_config = utils.parse_json_file(FORECAST_STATION_CONFIG_DIR)
-
-
-# def log_to_file(filename=None, level=logging.INFO):
-#     """
-#     Set log file to filename
-#     :param filename: log file name
-#     :param level: logging level
-#     :return: None
-#     """
-#     _logger.setLevel(level)
-#     if filename is None:
-#         handler = logging.FileHandler('weather.log', 'w')
-#         handler.setFormatter(_log_format)
-#         _logger.addHandler(handler)
-#     else:
-#         handler = logging.FileHandler(filename, 'w')
-#         handler.setFormatter(_log_format)
-#         _logger.addHandler(handler)
 
 
 def fetch_weather_data_of_site(grid_id):
@@ -137,39 +119,49 @@ def fetch_forecast_data():
     return data_list
 
 
-def reformatting_raw_weather_data(raw_data):
+def reformatting_raw_forecast_data(raw_data):
     """
-    Deprecated. Reformatting the data fetched by fetch_weather_data()
-    :return: a list of reformatted data
+    Deprecated. Reformatting the raw forecast data fetched by fetch_forecast_data()
+    :return: a list of reformatted forecast data
     """
-    formatted_data = []
     for raw in raw_data:
-        rgdata = raw['RegionalWeather']
-        rainfall = raw['Rainfall']
-        rh = rgdata['RH']
-        temp = rgdata['Temp']
-        wind = rgdata['Wind']
+        key_list = ['Latitude', 'Longitude', 'ModelTime', 'DailyForecast']
+        for key in key_list:
+            _s_key = utils.camel2snake(key)
+            raw[_s_key] = raw.pop(key)
+        raw['stn'] = raw.pop('StationCode')
+        raw['hourly_forecast'] = raw.pop('HourlyWeatherForecast')
+        raw['time'] = raw.pop('LastModified')
+        raw_daily = raw['daily_forecast']
+        raw_hourly = raw['hourly_forecast']
 
-        grid_id = rgdata['Grid']
-        obs_time = rgdata['ObsTime']
+        # turn keys in daily forecast into snake case
+        daily_key_list = [name for name in raw_daily[0]]
+        s_daily_key_list = [utils.camel2snake(name) for name in daily_key_list]
+        for onedaily in raw_daily:
+            for i, key in enumerate(s_daily_key_list):
+                onedaily[key] = onedaily.pop(daily_key_list[i])
 
-        # cleaning temp
-        del temp['ModelMaxTemperature']
-        del temp['ModelMinTemperature']
-        del temp['Temperature_AroundtoOdd']
+        # turn keys in hourly forecast into snake case
+        hourly_key_list = [name for name in raw_hourly[0]]
+        s_hourly_key_list = [utils.camel2snake(name) for name in hourly_key_list]
+        formatted_hourly = []
+        hourly_weather_forecast = []
+        for onehourly in raw_hourly:
+            # deal with some incomplete data
+            if len(onehourly) == 5:
+                _dict = {}
+                for i, key in enumerate(s_hourly_key_list):
+                    _dict[key] = onehourly[hourly_key_list[i]]
+                formatted_hourly.append(_dict)
+            else:
+                key_list = ['ForecastWeather', 'ForecastHour']
+                _temp = {utils.camel2snake(key): onehourly[key] for key in key_list}
+                hourly_weather_forecast.append(_temp)
+        raw['hourly_forecast'] = formatted_hourly
+        raw['hourly_weather_forecast'] = hourly_weather_forecast
 
-        # checking station matching problems
-
-        formatted_data.append({
-            'GridId': grid_id,
-            'ObsTime': obs_time,
-            'Rainfall': rainfall,
-            'RelativeHumidity': rh,
-            'Temp': temp,
-            'Wind': wind
-        })
-
-    return formatted_data
+    return raw_data
 
 
 def fetch_and_store_weather_data(forecast=False):
@@ -187,6 +179,15 @@ def fetch_and_store_weather_data(forecast=False):
             return ERROR_FETCH
         for data in data_list:
             current.replace_one({'stn': data['stn'], 'time': data['time']}, data, upsert=True)
+    else:
+        forecast = db_handler.get_collection(collections['forecast'])
+        raw_data = fetch_forecast_data()
+        if isinstance(raw_data, str):
+            return ERROR_FETCH
+        data_list = reformatting_raw_forecast_data(raw_data)
+        for data in data_list:
+            forecast.replace_one({'stn': data['stn'], 'time': data['time']}, data, upsert=True)
+
     return SUCCESS
 
 
@@ -251,4 +252,4 @@ if __name__ == '__main__':
     # # fecth_weather_data_of_site(2207)
     # data_list = fetch_weather_data()
     # print(a)
-    create_statation_collection()
+    fetch_and_store_weather_data(True)
