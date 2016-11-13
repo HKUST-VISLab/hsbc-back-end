@@ -100,7 +100,7 @@ def safe_open_url(path):
         return response
 
 
-def task_thread(func, sleep_time, stop_time, args):
+def task_thread(func, args, sleep_time, stop_time):
     def task(func, args):
         start_time = time.time()
         while(time.time() - start_time < stop_time):
