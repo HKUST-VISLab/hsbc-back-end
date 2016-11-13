@@ -12,13 +12,15 @@ from src.DB import document_db
 from src.DB import mongodb
 from src import utils
 import time
+import os.path
 
 # Configurations
-STATION_CONFIG_DIR = 'config/station_config.json'
-FULL_STATION_CONFIG_DIR = 'config/full_station_config.json'
-FORECAST_STATION_CONFIG_DIR = 'config/forecast_station_config.json'
-DB_CONFIG_DIR = 'config/db_config.json'
-WEATHER_CODE_DIR = 'config/weather_code.json'
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATION_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/station_config.json')
+FULL_STATION_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/full_station_config.json')
+FORECAST_STATION_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/forecast_station_config.json')
+DB_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/db_config.json')
+WEATHER_CODE_DIR = os.path.join(CURRENT_DIR, '../config/weather_code.json')
 
 # Constants
 ERROR_FETCH = 1
