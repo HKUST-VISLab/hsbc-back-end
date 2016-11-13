@@ -1,0 +1,149 @@
+{
+    "weather_code":{
+        "50": {
+            "tchi": "陽光充沛",
+            "eng": "Sunny",
+            "schi": "阳光充沛"
+        },
+        "51": {
+            "tchi": "間有陽光",
+            "eng": "Sunny Periods",
+            "schi": "间有阳光"
+        },
+        "52": {
+            "tchi": "短暫陽光",
+            "eng": "Sunny Intervals",
+            "schi": "短暂阳光"
+        },
+        "53": {
+            "tchi": "間有陽光 幾陣驟雨",
+            "eng": "Sunny Periods with A Few Showers",
+            "schi": "间有阳光 几阵骤雨"
+        },
+        "54": {
+            "tchi": "短暫陽光 有驟雨",
+            "eng": "Sunny Intervals with Showers",
+            "schi": "短暂阳光 有骤雨"
+        },
+        "60": {
+            "tchi": "多雲",
+            "eng": "Cloudy",
+            "schi": "多云"
+        },
+        "61": {
+            "tchi": "密雲",
+            "eng": "Overcast",
+            "schi": "密云"
+        },
+        "62": {
+            "tchi": "微雨",
+            "eng": "Light Rain",
+            "schi": "微雨"
+        },
+        "63": {
+            "tchi": "雨",
+            "eng": "Rain",
+            "schi": "雨"
+        },
+        "64": {
+            "tchi": "大雨",
+            "eng": "Heavy Rain",
+            "schi": "大雨"
+        },
+        "65": {
+            "tchi": "雷暴",
+            "eng": "Thunderstorms",
+            "schi": "雷暴"
+        },
+        "70": {
+            "tchi": "天色良好",
+            "eng": "Fine",
+            "schi": "天色良好"
+        },
+        "71": {
+            "tchi": "天色良好",
+            "eng": "Fine",
+            "schi": "天色良好"
+        },
+        "72": {
+            "tchi": "天色良好",
+            "eng": "Fine",
+            "schi": "天色良好"
+        },
+        "73": {
+            "tchi": "天色良好",
+            "eng": "Fine",
+            "schi": "天色良好"
+        },
+        "74": {
+            "tchi": "天色良好",
+            "eng": "Fine",
+            "schi": "天色良好"
+        },
+        "75": {
+            "tchi": "天色良好",
+            "eng": "Fine",
+            "schi": "天色良好"
+        },
+        "76": {
+            "tchi": "大致多雲",
+            "eng": "Mainly Cloudly",
+            "schi": "大致多云"
+        },
+        "77": {
+            "tchi": "天色大致良好",
+            "eng": "Mainly Fine",
+            "schi": "天色大致良好"
+        },
+        "701": {
+            "tchi": "大致多雲",
+            "eng": "Mainly Cloudly",
+            "schi": "大致多云"
+        },
+        "702": {
+            "tchi": "天色大致良好",
+            "eng": "Mainly Fine",
+            "schi": "天色大致良好"
+        },
+        "711": {
+            "tchi": "大致多雲",
+            "eng": "Mainly Cloudly",
+            "schi": "大致多云"
+        },
+        "712": {
+            "tchi": "天色大致良好",
+            "eng": "Mainly Fine",
+            "schi": "天色大致良好"
+        },
+        "721": {
+            "tchi": "大致多雲",
+            "eng": "Mainly Cloudly",
+            "schi": "大致多云"
+        },
+        "722": {
+            "tchi": "天色大致良好",
+            "eng": "Mainly Fine",
+            "schi": "天色大致良好"
+        },
+        "741": {
+            "tchi": "大致多雲",
+            "eng": "Mainly Cloudly",
+            "schi": "大致多云"
+        },
+        "742": {
+            "tchi": "天色大致良好",
+            "eng": "Mainly Fine",
+            "schi": "天色大致良好"
+        },
+        "751": {
+            "tchi": "大致多雲",
+            "eng": "Mainly Cloudly",
+            "schi": "大致多云"
+        },
+        "752": {
+            "tchi": "天色大致良好",
+            "eng": "Mainly Fine",
+            "schi": "天色大致良好"
+        }
+    }
+}

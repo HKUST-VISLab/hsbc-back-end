@@ -1,9 +1,9 @@
 from . import DB as DB
-from . import preprocess as preprocess
+from src.preprocess.weather_data_helper import create_basic_collection
 
 
-def fetch_weather_data_and_store():
-    pass
+def seed():
+    create_basic_collection()
 
 if __name__ == '__main__':
-    fetch_weather_data_and_store()
+    seed()
