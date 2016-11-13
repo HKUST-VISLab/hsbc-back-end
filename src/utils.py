@@ -22,7 +22,7 @@ class Logger:
 
     def __init__(self, name, filename=None, formatter=_log_format, level=logging.INFO):
         if filename is None:
-            current_str = time.strftime("%m%d", time.localtime())
+            current_str = time.strftime("%m%d％H％M", time.localtime())
             filename = current_str+'.log'
         handler = logging.FileHandler(filename, 'w')
         handler.setFormatter(formatter)
