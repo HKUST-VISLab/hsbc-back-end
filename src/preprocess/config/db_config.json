@@ -5,7 +5,8 @@
     "port": 27017,
     "collections": {
       "current": "current_weather",
-      "forecast": "forecast_weather"
+      "forecast": "forecast_weather",
+      "station": "station"
     }
   }
 }
