@@ -16,8 +16,8 @@ if __name__ == '__main__':
     tasks.append(task_thread(fetch_and_store_weather_data, False, CURRENT_INTERVAL, TOTAL_RUNNING_TIME))
     tasks.append(task_thread(fetch_and_store_weather_data, True, FORECAST_INTERVAL, TOTAL_RUNNING_TIME))
     for task in tasks:
-        task.run()
+        task.start()
     time.sleep(TOTAL_RUNNING_TIME)
     for task in tasks:
-        task.join(1)
+        task.join(0.1)
 

@@ -176,18 +176,23 @@ def fetch_and_store_weather_data(forecast=False):
         current = db_handler.get_collection(collections['current'])
         data_list = fetch_full_weather_data()
         if isinstance(data_list, str):
+            _logger.info("Unable to fetch current weather data.")
             return ERROR_FETCH
+        _logger.info("current weather data fetched.")
         for data in data_list:
             current.replace_one({'stn': data['stn'], 'time': data['time']}, data, upsert=True)
+        _logger.info("database updated successfully with current weather data.")
     else:
         forecast = db_handler.get_collection(collections['forecast'])
         raw_data = fetch_forecast_data()
         if isinstance(raw_data, str):
+            _logger.info("Unable to fetch current weather data.")
             return ERROR_FETCH
+        _logger.info("forecast weather data fetched.")
         data_list = reformatting_raw_forecast_data(raw_data)
         for data in data_list:
             forecast.replace_one({'stn': data['stn'], 'time': data['time']}, data, upsert=True)
-
+        _logger.info("database updated successfully with forecast weather data.")
     return SUCCESS
 
 
@@ -202,6 +207,8 @@ def fetch_full_weather_data():
     if isinstance(response, str):
         return response
     raw = utils.parse_csv_file(response)
+
+    # pre-processing
     title = raw[0][0].split()
     timestr = title[4] + '-' + title[8] + '-' + title[9] + '-' + title[10]
     tm = time.strptime(timestr, '%H:%M-%d-%B-%Y')
