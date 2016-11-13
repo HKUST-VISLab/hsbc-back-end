@@ -1,0 +1,82 @@
+{
+  "CCH": {
+    "tchi": "長洲",
+    "eng": "Cheung Chau",
+    "schi": "长洲"
+  },
+  "HKA": {
+    "tchi": "赤鱲角",
+    "eng": "Chek Lap Kok",
+    "schi": "赤鱲角"
+  },
+  "HKO": {
+    "tchi": "香港天文台",
+    "eng": "Hong Kong Observatory",
+    "schi": "香港天文台"
+  },
+  "HKS": {
+    "tchi": "黃竹坑",
+    "eng": "Wong Chuk Hang",
+    "schi": "黄竹坑"
+  },
+  "JKB": {
+    "tchi": "將軍澳",
+    "eng": "Tseung Kwan O",
+    "schi": "将军澳"
+  },
+  "LFS": {
+    "tchi": "流浮山",
+    "eng": "Lau Fau Shan",
+    "schi": "流浮山"
+  },
+  "PEN": {
+    "tchi": "坪洲",
+    "eng": "Peng Chau",
+    "schi": "坪洲"
+  },
+  "SEK": {
+    "tchi": "石崗",
+    "eng": "Shek Kong",
+    "schi": "石岗"
+  },
+  "SHA": {
+    "tchi": "沙田",
+    "eng": "Sha Tin",
+    "schi": "沙田"
+  },
+  "SKG": {
+    "tchi": "西貢",
+    "eng": "Sai Kung",
+    "schi": "西贡"
+  },
+  "TKL": {
+    "tchi": "打鼓嶺",
+    "eng": "Ta Kwu Ling",
+    "schi": "打鼓岭"
+  },
+  "TPO": {
+    "tchi": "大埔",
+    "eng": "Tai Po",
+    "schi": "大埔"
+  },
+  "TUN": {
+    "tchi": "屯門",
+    "eng": "Tuen Mun",
+    "schi": "屯门"
+  },
+  "TY1": {
+    "tchi": "青衣",
+    "eng": "Tsing Yi",
+    "schi": "青衣"
+  },
+  "WGL": {
+    "tchi": "橫瀾島",
+    "eng": "Waglan Island",
+    "schi": "横澜岛"
+  },
+  "SSH": {
+    "tchi": "上水",
+    "eng": "Sheung Shui",
+    "schi": "上水"
+  }
+}

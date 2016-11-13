@@ -1,0 +1,12 @@
+{
+  "weather_db": {
+    "db_name": "weather_data",
+    "host": "localhost",
+    "port": 27017,
+    "collections": {
+      "current": "current_weather",
+      "forecast": "forecast_weather",
+      "station": "station"
+    }
+  }
+}
