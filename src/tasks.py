@@ -1,4 +1,4 @@
-from . import DB as DB
+
 from src.preprocess.weather_data_helper import create_basic_collection
 
 
