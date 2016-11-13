@@ -1,0 +1,488 @@
+{
+    "Stations": [{
+        "StationCode": "hko",
+        "latitude": "22.301944",
+        "longitude": "114.174297",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "香港天文台",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "sha",
+        "latitude": "22.402478",
+        "longitude": "114.209881",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "沙田",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "lfs",
+        "latitude": "22.468925",
+        "longitude": "113.983511",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "流浮山",
+        "WebcamAngle": "270"
+    },
+    {
+        "StationCode": "tkl",
+        "latitude": "22.528544",
+        "longitude": "114.156619",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "打鼓岭",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "tun",
+        "latitude": "22.385906",
+        "longitude": "113.964178",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "屯门",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "hks",
+        "latitude": "22.247836",
+        "longitude": "114.173547",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "黄竹坑",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "wgl",
+        "latitude": "22.182231",
+        "longitude": "114.303353",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "横澜岛",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "gi",
+        "latitude": "22.284992",
+        "longitude": "114.112828",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "青洲",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "jkb",
+        "latitude": "22.315708",
+        "longitude": "114.255631",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "将军澳",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "ccb",
+        "latitude": "22.210858",
+        "longitude": "114.029433",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "长洲泳滩",
+        "WebcamAngle": "90"
+    },
+    {
+        "StationCode": "kp",
+        "latitude": "22.311897",
+        "longitude": "114.172878",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "京士柏",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "plc",
+        "latitude": "22.475225",
+        "longitude": "114.237586",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "大美督",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "slw",
+        "latitude": "22.288000",
+        "longitude": "113.904167",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "沙螺湾",
+        "WebcamAngle": "45"
+    },
+    {
+        "StationCode": "skg",
+        "latitude": "22.375575",
+        "longitude": "114.274436",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "西贡",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "tap",
+        "latitude": "22.471358",
+        "longitude": "114.360583",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "塔门",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "tyw",
+        "latitude": "22.402825",
+        "longitude": "114.322992",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "北潭涌",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "sek",
+        "latitude": "22.436219",
+        "longitude": "114.084642",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "石岗",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "tms",
+        "latitude": "22.410436",
+        "longitude": "114.124475",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "大帽山",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "hka",
+        "latitude": "22.309350",
+        "longitude": "113.921989",
+        "Windlatitude": "22.316503",
+        "Windlongitude": "113.911875",
+        "StationName": "赤鱲角",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "tc",
+        "latitude": "22.357769",
+        "longitude": "114.217831",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "大老山",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "tpo",
+        "latitude": "22.445978",
+        "longitude": "114.178978",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "大埔",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "ngp",
+        "latitude": "22.258533",
+        "longitude": "113.912694",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "昂坪",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "vp1",
+        "latitude": "22.264111",
+        "longitude": "114.155103",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "山顶",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "pen",
+        "latitude": "22.291231",
+        "longitude": "114.043444",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "坪洲",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "ssh",
+        "latitude": "22.501897",
+        "longitude": "114.111097",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "上水",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "twn",
+        "latitude": "22.383633",
+        "longitude": "114.107817",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "荃湾可观",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "wlp",
+        "latitude": "22.466508",
+        "longitude": "114.008767",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "湿地公园",
+        "WebcamAngle": "45"
+    },
+    {
+        "StationCode": "hkp",
+        "latitude": "22.278211",
+        "longitude": "114.162092",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "香港公园",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "skw",
+        "latitude": "22.281664",
+        "longitude": "114.238839",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "筲箕湾",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "klt",
+        "latitude": "22.335114",
+        "longitude": "114.184717",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "九龙城",
+        "WebcamAngle": "135"
+    },
+    {
+        "StationCode": "hpv",
+        "latitude": "22.270625",
+        "longitude": "114.183575",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "跑马地",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "ksc",
+        "latitude": "22.370283",
+        "longitude": "114.312478",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "滘西洲",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "wts",
+        "latitude": "22.339383",
+        "longitude": "114.205347",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "黄大仙",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "sty",
+        "latitude": "22.214083",
+        "longitude": "114.218511",
+        "Windlatitude": "22.197500",
+        "Windlongitude": "114.211944",
+        "StationName": "赤柱",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "ktg",
+        "latitude": "22.318647",
+        "longitude": "114.224656",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "观塘",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "swh",
+        "latitude": "22.285555",
+        "longitude": "114.225833",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "西湾河",
+        "WebcamAngle": "90"
+    },
+    {
+        "StationCode": "ssp",
+        "latitude": "22.335833",
+        "longitude": "114.136944",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "深水埗",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "tw",
+        "latitude": "22.375658",
+        "longitude": "114.126664",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "荃湾城门谷",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "ty1",
+        "latitude": "22.344256",
+        "longitude": "114.110081",
+        "Windlatitude": "22.345278",
+        "Windlongitude": "114.086028",
+        "StationName": "青衣",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "tpk",
+        "latitude": "22.442606",
+        "longitude": "114.184031",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "大埔滘",
+        "WebcamAngle": "45"
+    },
+    {
+        "StationCode": "kfb",
+        "latitude": "22.432708",
+        "longitude": "114.120805",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "嘉道理农场暨植物园",
+        "WebcamAngle": "270"
+    },
+    {
+        "StationCode": "se",
+        "latitude": "22.309647",
+        "longitude": "114.213306",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "启德",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "sf",
+        "latitude": "22.293008",
+        "longitude": "114.168420",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "天星码头",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "sc",
+        "latitude": "22.345911",
+        "longitude": "113.891061",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "沙洲",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "cch",
+        "latitude": "22.201111",
+        "longitude": "114.026669",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "长洲",
+        "WebcamAngle": "360"
+    },
+    {
+        "StationCode": "cp1",
+        "latitude": "22.288888",
+        "longitude": "114.155833",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "中环",
+        "WebcamAngle": "90"
+    },
+    {
+        "StationCode": "hss",
+        "latitude": "22.218300",
+        "longitude": "114.214290",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "香港航海学校",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "gsi",
+        "latitude": "22.265726",
+        "longitude": "114.160995",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "德瑞国际学校",
+        "WebcamAngle": "180"
+    },
+    {
+        "StationCode": "tlc",
+        "latitude": "22.362778",
+        "longitude": "114.011111",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "大榄涌",
+        "WebcamAngle": "180"
+    },
+    {
+        "StationCode": "lam",
+        "latitude": "22.226228",
+        "longitude": "114.108639",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "南丫岛",
+        "WebcamAngle": "315"
+    },
+    {
+        "StationCode": "se1",
+        "latitude": "22.304722",
+        "longitude": "114.217222",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "启德跑道公园",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "ylp",
+        "latitude": "22.440800",
+        "longitude": "114.018200",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "元朗公园",
+        "WebcamAngle": "0"
+    },
+    {
+        "StationCode": "elc",
+        "latitude": "22.492611",
+        "longitude": "114.124028",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "上水风采中学",
+        "WebcamAngle": "315"
+    },
+    {
+        "StationCode": "vpa",
+        "latitude": "22.276",
+        "longitude": "114.146",
+        "Windlatitude": "",
+        "Windlongitude": "",
+        "StationName": "太平山",
+        "WebcamAngle": "90"
+    }]
+}
