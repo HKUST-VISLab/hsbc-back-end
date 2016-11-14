@@ -152,12 +152,12 @@ def reformatting_raw_forecast_data(raw_data):
         hourly_weather_forecast = []
         for onehourly in raw_hourly:
             # deal with some incomplete data
-            if len(onehourly) == 5:
+            if len(onehourly) > 4:
                 _dict = {}
                 for i, key in enumerate(s_hourly_key_list):
                     _dict[key] = onehourly[hourly_key_list[i]]
                 formatted_hourly.append(_dict)
-            else:
+            if len(onehourly) != 5:
                 key_list = ['ForecastWeather', 'ForecastHour']
                 _temp = {utils.camel2snake(key): onehourly[key] for key in key_list}
                 hourly_weather_forecast.append(_temp)
