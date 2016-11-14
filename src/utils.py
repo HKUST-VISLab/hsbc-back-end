@@ -29,7 +29,7 @@ class Logger:
         :param level:
         """
         if filename is None:
-            current_str = time.strftime("%m%d％H％M", time.localtime())
+            current_str = time.strftime("%m%d%H%M", time.localtime())
             filename = current_str+'.log'
         handler = logging.FileHandler(filename, 'w')
         handler.setFormatter(formatter)
