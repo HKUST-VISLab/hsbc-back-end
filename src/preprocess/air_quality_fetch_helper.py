@@ -3,12 +3,9 @@ Class for fetch and parse air quality data from hk government pages
 """
 from datetime import datetime
 import urllib
-from urllib import request, error, parse
+from urllib import request
 from urllib.error import HTTPError, URLError
 from bs4 import BeautifulSoup
-# from src import utils
-
-
 
 
 class AQExtractor:
@@ -18,18 +15,20 @@ class AQExtractor:
     Attributes:
         weather_url: the url from which the air quality information will be extracted.
         page: urllib page, the whole html page
+        page_soup： beautiful soup module
         table_head: the table head of html page []
         air_quality: the air quality information [{attr1: val1; att2, val2}]
+        update_tiem: the recent update time on the webpages
     """
 
     weather_url = 'http://www.aqhi.gov.hk/en/aqhi/pollutant-and-aqhi-distribution.html'
     page = None
     page_soup = None
-    table_head = ['StationName', 'NO2', 'O3', 'SO2', 'CO', 'PM10', 'OM2.5', 'AQHI']
+    table_head = ['StationName', 'NO2', 'O3', 'SO2', 'CO', 'PM10', 'PM2.5', 'AQHI']
     air_quality = []
     update_time = -1
 
-    def __init__(self, path = None):
+    def __init__(self, path=None):
         """Init the path and parse url
 
         :param path: the path of url, default page are 'weather url
@@ -97,17 +96,22 @@ class AQExtractor:
                 attr_name = self.table_head[index]
                 if attr_name in row_structure:
                     print('Attributes existed! Check the pages!')
-                row_structure[attr_name] = row[index]
+
                 if index == 0:
                     station_id = self.__get_station_id_from_name(attr_name)
+                    row_structure[attr_name] = row[index]
+                else:
+                    value = row[index]
+                    value = float(value) if isfloat(value) else None
+
+                    row_structure[attr_name] = value
+
             row_structure['station_id'] = station_id
             row_structure['update_time'] = self.time_string
             structured_records.append(row_structure)
-
-
         return structured_records
 
-    def __extract_update_time(self, page=None):
+    def __extract_update_time(self):
         """ Extract update time from the page
 
         :return: the recent update time as the following format %Y-%m-%d %H:%M:%S (2016-11-16 13:00:00)
@@ -129,8 +133,19 @@ class AQExtractor:
         """This function should be the one in the config class"""
         return None
 
+def isfloat(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
 
-if __name__ == '__main__':
-
+def fetch_air_quality():
     aq = AQExtractor()
     quality = aq.get_air_quality()
+    return quality
+
+if __name__ == '__main__':
+    data = fetch_air_quality()
+    for d in data:
+        print(d)
