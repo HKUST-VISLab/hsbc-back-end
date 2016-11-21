@@ -6,6 +6,8 @@ import urllib
 from urllib import request
 from urllib.error import HTTPError, URLError
 from bs4 import BeautifulSoup
+from src.config import Config
+from src.utils import _logger
 
 
 class AQExtractor:
@@ -108,6 +110,7 @@ class AQExtractor:
 
             row_structure['station_id'] = station_id
             row_structure['update_time'] = self.time_string
+            row_structure['PM2_5'] = row_structure.pop('PM2.5') # Mongo DB recommend not using '.' in keys
             structured_records.append(row_structure)
         return structured_records
 
@@ -145,7 +148,21 @@ def fetch_air_quality():
     quality = aq.get_air_quality()
     return quality
 
-if __name__ == '__main__':
+def fetch_and_store_air_quality():
     data = fetch_air_quality()
-    for d in data:
-        print(d)
+    current_time = data[0]['update_time']
+    if AQExtractor.update_time != current_time:
+        AQExtractor.update_time = current_time
+        collection = Config.get_collection_handler('air_quality')
+        collection.insert_many(data)
+        _logger.info('Air quality data of time: ' + current_time + ' fetched and stored successfully.')
+    else:
+        _logger.info('Fetched data of time: '+current_time+'. No need to update air quality data.')
+
+
+
+if __name__ == '__main__':
+    # data = fetch_air_quality()
+    # for d in data:
+    #     print(d)
+    fetch_and_store_air_quality()
