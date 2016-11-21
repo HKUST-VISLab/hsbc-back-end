@@ -100,13 +100,16 @@ def safe_open_url(path):
         return response
 
 
-def task_thread(func, args, sleep_time, stop_time):
+def task_thread(func, sleep_time, stop_time, args = None):
     def task(func, args):
         start_time = time.time()
         i = 0
         while(time.time() - start_time < stop_time):
             i += 1
-            func(args)
+            if args == None:
+                func()
+            else:
+                func(args)
             # For more accurate period control when time length is too large
             time.sleep(sleep_time*i + start_time - time.time())
         return 0
