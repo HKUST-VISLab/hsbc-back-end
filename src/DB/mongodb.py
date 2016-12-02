@@ -63,7 +63,12 @@ class MongoCollection:
         """
         self.__collection.insert_many(documents)
 
-    def delete_one(self, document_id):
+    def delete_one(self, query):
+        """Delete a single document according to its id
+        """
+        self.__collection.delete_one(query)
+
+    def delete_one_by_id(self, document_id):
         """Delete a single document according to its id
         """
         self.__collection.delete_one({"_id": document_id})
@@ -78,10 +83,10 @@ class MongoCollection:
         """
         return self.__collection.find_one_and_delete({"_id": document_id}, projection)
 
-    def update_one(self, document_id, update_data, upsert=False):
-        """Update a single document according to its id
+    def update_one(self, query, update_data, upsert=False):
+        """Update a single document matching the filter.
         """
-        self.__collection.update_one({"_id": document_id}, update_data, upsert)
+        self.__collection.update_one(query, update_data, upsert)
 
     def update_one_then_return(self, document_id, update_data, upsert=False, projection=None):
         """Update a single document then return the updated document
@@ -99,12 +104,12 @@ class MongoCollection:
         """
         self.__collection.replace_one(query, replace_data, upsert)
 
-    def find(self, query, projection=None, limit=None, skip=None, sort=None):
+    def find(self, query=None, projection=None, skip=0, limit=0, sort=None):
         """Find documents according to the query
         """
         return self.__collection.find(query, projection, skip, limit, sort=sort)
 
-    def find_one(self, query):
+    def find_one(self, query=None):
         """Find one document according to the query
         """
         return self.__collection.find_one(query)
@@ -114,7 +119,7 @@ class MongoCollection:
         """
         return self.__collection.find_one_and_update(query, update, projection, sort)
 
-    def count(self, query, limit=None, skip=None):
+    def count(self, query=None, limit=None, skip=None):
         """Get the number of documents in this collection.
         """
         return self.__collection.count(query, limit=limit, skip=skip)
@@ -143,6 +148,11 @@ class MongoCollection:
         """Get the list of index name
         """
         return list(self.__collection.index_information().keys())
+
+    def drop(self):
+        """Drops this collection.
+        """
+        self.__collection.drop()
 
     def get_index(self, name):
         """Get a index according to its name

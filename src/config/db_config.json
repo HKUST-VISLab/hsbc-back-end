@@ -8,7 +8,8 @@
       "forecast": "forecast_weather",
       "air_quality": "air_quality",
       "station": "station",
-      "weather_code": "weather_code"
+      "weather_code": "weather_code",
+      "last_update": "last_update"
     }
   }
 }

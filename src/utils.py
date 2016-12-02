@@ -18,7 +18,7 @@ class Logger:
     """
     A more convenient logger class
     """
-    _log_format = logging.Formatter('%(asctime)s %(levelname)s: %(message)s')
+    _log_format = logging.Formatter('[%(asctime)s] %(name)s [%(levelname)s]: %(message)s','%Y-%m-%d %H:%M:%S')
 
     def __init__(self, name, filename=None, formatter=_log_format, level=logging.INFO):
         """
@@ -114,6 +114,7 @@ def task_thread(func, sleep_time, stop_time, args = None):
             time.sleep(sleep_time*i + start_time - time.time())
         return 0
     return threading.Thread(target=task, args=(func, args))
+
 
 if __name__ == '__main__':
     def _test_hello(name):
