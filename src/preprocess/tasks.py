@@ -7,9 +7,9 @@ from src.preprocess.air_quality_fetch_helper import fetch_and_store_air_quality
 from src.utils import Logger, task_thread
 import time
 
-CURRENT_INTERVAL = 300
+CURRENT_INTERVAL = 200
 FORECAST_INTERVAL = 3600*3
-AQ_INTERVAL = 1800
+AQ_INTERVAL = 1200
 
 TOTAL_RUNNING_TIME = 3600*24*7
 

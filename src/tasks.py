@@ -1,9 +1,9 @@
 
-from src.preprocess.weather_data_helper import WeatherFetcher as WF
+from src.config import Config
 
 
 def seed():
-    WF.create_basic_collection()
+    Config.db_seed()
 
 if __name__ == '__main__':
     seed()
