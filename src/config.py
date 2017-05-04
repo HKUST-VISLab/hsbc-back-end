@@ -21,9 +21,11 @@ class Config:
     DB_CONFIG_DIR = os.path.join(CONFIG_DIR, 'db_config.json')
     WEATHER_CODE_DIR = os.path.join(CONFIG_DIR, 'weather_code.json')
     STATION_CONFIG_DIR = os.path.join(CONFIG_DIR, 'station_config.json')
+    AIR_STATION_CONFIG_DIR = os.path.join(CONFIG_DIR, 'air_station_config.json')
 
     _db_config = utils.parse_json_file(DB_CONFIG_DIR)
     _station_config = utils.parse_json_file(STATION_CONFIG_DIR)
+    _air_station_config = utils.parse_json_file(AIR_STATION_CONFIG_DIR)
     _full_station_config = utils.parse_json_file(FULL_STATION_CONFIG_DIR)
     _forecast_config = utils.parse_json_file(FORECAST_STATION_CONFIG_DIR)
     _weather_code = (utils.parse_json_file(WEATHER_CODE_DIR))['weather_code']
@@ -33,7 +35,7 @@ class Config:
     @classmethod
     def get_collection_handler(cls, collection_name):
         db_handler = cls._create_db_handler()
-        collection = cls._db_config['weather_db']['collections'][collection_name]
+        collection = cls._db_config['weather_db']['collections'][collection_name] #wired, change latter
         return db_handler.get_collection(collection)   
 
     @classmethod
@@ -59,6 +61,7 @@ class Config:
         :return:
         """
         cls.db_seed_station()
+        cls.db_seed_air_station()
         cls.db_seed_weather_code()
         cls.db_seed_last_update()
 
@@ -76,11 +79,19 @@ class Config:
         for station_code in cls._forecast_config:
             collection.update_many({'station_code': station_code.lower()}, {'$set': {'has_forecast': True}})
 
+    @classmethod
+    def db_seed_air_station(cls):
+        # db_handler = cls._create_db_handler()
+        # collection_name = cls.get_collection_handler_name('station')
+        # db_handler.drop_collection(collection_name)
+        collection = cls.get_collection_handler('air_station')
+
+        for station in cls._air_station_config['stations']:
+            collection.insert_one(station)
 
     @classmethod
     def db_seed_weather_code(cls):
         collection = cls.get_collection_handler('weather_code')
-        
         for code, info in cls._weather_code.items():
             info["code"] = code
             collection.replace_one({'code': code}, info, True)
