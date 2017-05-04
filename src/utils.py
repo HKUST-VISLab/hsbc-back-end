@@ -12,6 +12,7 @@ from urllib import request, error
 from urllib.error import HTTPError, URLError
 import csv
 import re
+from datetime import datetime
 
 
 class Logger:
@@ -115,6 +116,11 @@ def task_thread(func, sleep_time, stop_time, args = None):
         return 0
     return threading.Thread(target=task, args=(func, args))
 
+def time_convert(tm_str, t_format):
+    # print(tm_str)
+    if not isinstance(tm_str, str):
+        tm_str = str(tm_str)
+    return str(datetime.strptime(tm_str, t_format))
 
 if __name__ == '__main__':
     def _test_hello(name):

@@ -10,3 +10,5 @@ MANIFEST
 # logs
 *.log
 
+venv
+**/.DS_Store

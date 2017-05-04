@@ -1,11 +1,16 @@
 """
 Config Class
+
+create collections: db_seed(), db_seed_station(), db_seed_weather_code(), db_seed_last_update()
+get db/collection handlers: 
+extract info from collections: get_station_from_code(), get_weather_from_code()
 """
 
 import os
 from .DB import mongodb
 from . import utils
 import time
+from datetime import datetime
 
 class Config:
 
@@ -15,9 +20,10 @@ class Config:
     FORECAST_STATION_CONFIG_DIR = os.path.join(CONFIG_DIR, 'forecast_station_config.json')
     DB_CONFIG_DIR = os.path.join(CONFIG_DIR, 'db_config.json')
     WEATHER_CODE_DIR = os.path.join(CONFIG_DIR, 'weather_code.json')
+    STATION_CONFIG_DIR = os.path.join(CONFIG_DIR, 'station_config.json')
 
     _db_config = utils.parse_json_file(DB_CONFIG_DIR)
-    # _station_config = utils.parse_json_file(STATION_CONFIG_DIR)
+    _station_config = utils.parse_json_file(STATION_CONFIG_DIR)
     _full_station_config = utils.parse_json_file(FULL_STATION_CONFIG_DIR)
     _forecast_config = utils.parse_json_file(FORECAST_STATION_CONFIG_DIR)
     _weather_code = (utils.parse_json_file(WEATHER_CODE_DIR))['weather_code']
@@ -66,7 +72,6 @@ class Config:
 
         for station in cls._full_station_config['Stations']:
             station['has_forecast'] = False
-            station['station_code'] = station.pop("StationCode")
             collection.replace_one({'station_code': station['station_code']},station,True)
         for station_code in cls._forecast_config:
             collection.update_many({'station_code': station_code.lower()}, {'$set': {'has_forecast': True}})
@@ -87,5 +92,37 @@ class Config:
         collections = cls._db_config['weather_db']['collections']
         for collection_name in collections.values():
             if last_collection.find_one({'collection_name': collection_name}) is None:
-                timestr = time.strftime('%Y%m%d%H%M%S', time.gmtime())
-                last_collection.insert_one({'collection_name': collection_name, 'last_update_time': timestr})
+                # timestr = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+                timestr = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+                last_collection.insert_one({
+                    'collection_name': collection_name,
+                    'last_update_time': timestr
+                    })
+    @classmethod
+    def get_station_from_code(cls, code):
+        code = code.upper()
+        station_list = cls._station_config['service_content']['station_details']
+        for station in station_list:
+            if station['station_code'] == code:
+                return station['station_name']['en']
+        return code+' unfound'
+
+# the name of weather stations are chinese or code
+# the name of air stations are english or code
+# so, uniform them with station code, upper case
+
+    @classmethod
+    def get_code_from_station(cls, stn):
+        station_list = cls._station_config['service_content']['station_details']
+        for station in station_list:
+            if station['station_name']["en"] == stn:
+                return station['station_code']
+        return stn+' unfound'
+
+    @classmethod
+    def get_weather_from_code(cls, code):
+        weather_list = cls._weather_code
+        for key, value in weather_list:
+            if key == code:
+                return value
+        return code+' unfound'

@@ -1,7 +1,7 @@
 """
 Class for fetch and parse air quality data from hk government pages
 """
-from datetime import datetime
+from utils import time_convert
 import urllib
 from urllib import request
 from urllib.error import HTTPError, URLError
@@ -26,7 +26,7 @@ class AQExtractor:
     weather_url = 'http://www.aqhi.gov.hk/en/aqhi/pollutant-and-aqhi-distribution.html'
     page = None
     page_soup = None
-    table_head = ['StationName', 'NO2', 'O3', 'SO2', 'CO', 'PM10', 'PM2.5', 'AQHI']
+    table_head = ['station_name', 'NO2', 'O3', 'SO2', 'CO', 'PM10', 'PM2.5', 'AQHI']
     air_quality = []
     update_time = -1
 
@@ -123,11 +123,11 @@ class AQExtractor:
         if time_ele:
             time_str = time_ele.find('p').text
             try:
-                date_object = datetime.strptime(time_str, '(At %Y-%m-%d %H:%M)')
+                date_object = time_convert(time_str, '(At %Y-%m-%d %H:%M)')
             except ValueError as e:
                 print(e)
             else:
-                return date_object.__str__()
+                return date_object
         else:
             print('No time detected!')
             return None
