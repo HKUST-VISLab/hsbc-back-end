@@ -10,5 +10,7 @@ MANIFEST
 # logs
 *.log
 
-venv
-**/.DS_Store
+
+# osm file
+*.osm
+
