@@ -4,8 +4,16 @@ from pymongo import MongoClient
 CLIENT = "127.0.0.1"
 DB = "map"
 PORT = 27017
-NODECOLLECTION = "node"
-WAYCOLLECTION = "way"
+NODECOLLECTION = "node_test"
+WAYCOLLECTION = "way_test"
+HIGHWAY = 'highway'
+
+type_config = {
+    'node': {'collection': 'node'},
+    'way': {'collection': 'way'},
+    'highway': {'collection': 'highway'}
+}
+
 
 class OSMParser:
     def __init__(self, input_file):
@@ -14,15 +22,18 @@ class OSMParser:
         """
         self.osm_file = input_file
         self.tags = []
-        self.set_tags(['node', 'way'])
+        self.set_tags(['node', 'way', 'highway'])
         self.blocks = {}
         self.init()
 
     def init(self):
         self.containers = {}
         for tag in self.tags:
-            self.containers[tag] = etree.iterparse(self.osm_file, events=('start', ), tag=tag)
-
+            if tag != 'highway':
+                self.containers[tag] = etree.iterparse(self.osm_file, events=('start', ), tag=tag)
+            else:
+                self.containers[tag] = etree.iterparse(self.osm_file, events=('start',), tag="way")
+        print(self.containers)
     def set_tags(self, tags):
         """
         Set tags
@@ -95,49 +106,83 @@ class OSMParser:
 
         return tag_map
 
-    def dump_to_db(self):
+    def dump_to_db(self, type):
         """
         Extract nodes and ways and storage them into the database
         :return: None
         """
+        if type not in type_config:
+            print('No this type', type)
+            return
         client = MongoClient(CLIENT, PORT)
         db = client[DB]
-        node_colle = db[NODECOLLECTION]
-        way_colle = db[WAYCOLLECTION]
-        node_colle.remove({})
-        way_colle.remove({})
-        number = 0
-        node = parser.read_element('node')
-        while node != None:
-            if number % 10000 == 0:
-                print(number, 'of all nodes has been parsed!')
-            node_attr = parser.parse_attr(node)
-            children = parser.parse_children(node)
-            if children != None:
-                tag = children['tag']
-                node_attr['tag'] = tag
-            node_colle.insert(node_attr)
-            node.clear()
-            node = parser.read_element('node')
-            number += 1
+        collection = db[type_config[type]['collection']]
+        collection.remove({})
 
-        way = parser.read_element('way')
         number = 0
-        while way != None:
-            if number % 1000 == 0:
-                print(number, 'of all ways has been parsed!')
-            way_attr = parser.parse_attr(way)
-            children = parser.parse_children(way)
-            if children != None:
-                tag = children['tag']
-                way_attr['tag'] = tag
-                nds = children['nd']
-                way_attr['nd'] = nds
-            way_colle.insert(way_attr)
-            way.clear()
-            way = parser.read_element('way')
-            number += 1
+        if type == 'node':
+            node = self.read_element('node')
+            while node != None:
+                if number % 10000 == 0:
+                    print(number, 'of all nodes has been parsed!')
+                number += 1
+                node_attr = self.parse_attr(node)
+                children = self.parse_children(node)
+                if children != None:
+                    tag = children['tag']
+                    node_attr['tag'] = tag
+                collection.insert(node_attr)
+                node.clear()
+                node = self.read_element('node')
+
+        if type == 'way':
+            way = self.read_element('way')
+            while way != None:
+                if number % 1000 == 0:
+                    print(number, 'of all ways has been parsed!')
+                way_attr = self.parse_attr(way)
+                children = self.parse_children(way)
+                if children != None:
+                    tag = children['tag']
+                    way_attr['tag'] = tag
+                    nds = children['nd']
+                    way_attr['nd'] = nds
+                collection.insert(way_attr)
+                way.clear()
+                way = self.read_element('way')
+                number += 1
+
+        if type == 'highway':
+            highway = self.read_element('highway')
+            while highway != None:
+                if number % 1000 == 0:
+                    print(number, 'of all highways has been parsed!')
+                number += 1
+                way_attr = self.parse_attr(highway)
+                children = self.parse_children(highway)
+
+                if children != None:
+                    tag = children['tag']
+                    if 'highway' in tag:
+                        way_attr['tag'] = tag
+                        nds = children['nd']
+                        way_attr['nd'] = nds
+                        collection.insert(way_attr)
+                highway.clear()
+                highway = self.read_element('way')
+
+        client.close()
+
+    def dump_all_to_db(self):
+        """
+        Extract nodes and ways and storage them into the database
+        :return: None
+        """
+        types = ['way', 'highway']
+        for type in types:
+            self.dump_to_db(type)
 
 if __name__ == '__main__':
-    parser = OSMParser('HongKong.osm')
-    parser.dump_to_db()
+    parser = OSMParser('../../data/HongKong.osm')
+    # parser.dump_all_to_db()
+    parser.dump_to_db('highway')

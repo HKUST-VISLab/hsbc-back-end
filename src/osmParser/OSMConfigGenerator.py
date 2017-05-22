@@ -64,5 +64,13 @@ def generate_highway_config_file(input_html, output_json):
     with open(output_json, 'w') as output:
         json.dump(highway_config, output)
 
+def read_config(config_path):
+    with open(config_path, 'r') as input:
+
+        config = json.loads(input.read())
+        return config
+
 if __name__ == '__main__':
     pass
+    # config = read_config('../config/highway_config.json')
+    # print(config)
