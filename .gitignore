@@ -13,3 +13,9 @@ MANIFEST
 # osm file
 *.osm
 
+# nc file
+*.nc
+
+#python venv
+venv/
+

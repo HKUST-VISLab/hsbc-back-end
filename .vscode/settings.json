@@ -1,0 +1,7 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+
+    "python.pythonPath": "${workspaceRoot}/venv/bin/python3",
+    "python.linting.pylintPath": "${workspaceRoot}/venv/bin/pylint",
+    "python.linting.pylintEnabled": true
+}
