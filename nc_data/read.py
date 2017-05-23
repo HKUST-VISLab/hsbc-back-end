@@ -3,7 +3,7 @@ from netCDF4 import Dataset
 nc_file = Dataset('nc_data/Contour_3D_5m.nc', 'r')
 
 # clarify the structure
-
+print('format: ', nc_file.file_format)
 print("groups: ", nc_file.groups)
 
 print("the number of dimensions: ", len(nc_file.dimensions))
@@ -23,10 +23,11 @@ for val in nc_file.variables.values():
     shape = len(val.shape)
     print(shape)
 
-for i in range(7):
-    dataset = nc_file.variables['Dataset'+str(i+1)]
-    shape = dataset.shape
-    for x in shape[0]:
-        for y in shape[1]:
-            for z in shape[2]:
-                data = dataset[x][y][z]
+# for i in range(7):
+#     dataset = nc_file.variables['Dataset'+str(i+1)]
+#     shape = dataset.shape
+#     for x in range(shape[0]):
+#         for y in range(shape[1]):
+#             for z in range(shape[2]):
+#                 data = dataset[x][y][z]
+#                 print(data)
