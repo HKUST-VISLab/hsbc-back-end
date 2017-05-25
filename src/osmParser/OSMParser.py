@@ -178,11 +178,11 @@ class OSMParser:
         Extract nodes and ways and storage them into the database
         :return: None
         """
-        types = ['way', 'highway']
+        types = ['node', 'way']
         for type in types:
             self.dump_to_db(type)
 
 if __name__ == '__main__':
     parser = OSMParser('../../data/HongKong.osm')
-    # parser.dump_all_to_db()
-    parser.dump_to_db('highway')
+    parser.dump_all_to_db()
+    # parser.dump_to_db('highway')
