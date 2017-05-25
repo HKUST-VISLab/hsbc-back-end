@@ -184,5 +184,5 @@ class OSMParser:
 
 if __name__ == '__main__':
     parser = OSMParser('../../data/HongKong.osm')
-    parser.dump_all_to_db()
-    # parser.dump_to_db('highway')
+    # parser.dump_all_to_db()
+    parser.dump_to_db('highway')
