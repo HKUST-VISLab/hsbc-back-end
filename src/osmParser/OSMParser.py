@@ -51,21 +51,21 @@ class OSMParser:
                  if reach the end ,None will be returned
         """
         for e in self.containers[tag]:
-            yield e
-        yield None
+            yield e[1]
+        # yield None
 
-    def read_element(self, tag):
-        """
-        Each time return an element according to the tag and the index will be move to the next element.
-        If reach the last element, the return value will be None
-        :param tag:
-        :return: the element of tag, None for the end
-        """
-        if tag not in self.blocks:
-            self.blocks[tag] = self.block_generator(tag)
-        ele = self.blocks[tag].next()
-        ele = None if ele == None else ele[1]
-        return ele
+    # def read_element(self, tag):
+    #     """
+    #     Each time return an element according to the tag and the index will be move to the next element.
+    #     If reach the last element, the return value will be None
+    #     :param tag:
+    #     :return: the element of tag, None for the end
+    #     """
+    #     if tag not in self.blocks:
+    #         self.blocks[tag] = self.block_generator(tag)
+    #     ele = next(self.blocks[tag])
+    #     ele = None if ele == None else ele[1]
+    #     return ele
 
     def parse_attr(self, elem):
         """
@@ -81,7 +81,7 @@ class OSMParser:
 
         return {'id': elem.attrib['id']} if lat == None else{
             'id': elem.attrib['id'],
-            'location': [elem.attrib['lat'], elem.attrib['lon']]
+            'location': [float(elem.attrib['lat']), float(elem.attrib['lon'])]
         }
 
     def parse_children(self, elem):
@@ -120,57 +120,36 @@ class OSMParser:
         collection.remove({})
 
         number = 0
-        if type == 'node':
-            node = self.read_element('node')
-            while node != None:
-                if number % 10000 == 0:
-                    print(number, 'of all nodes has been parsed!')
-                number += 1
-                node_attr = self.parse_attr(node)
-                children = self.parse_children(node)
-                if children != None:
-                    tag = children['tag']
-                    node_attr['tag'] = tag
-                collection.insert(node_attr)
-                node.clear()
-                node = self.read_element('node')
 
-        if type == 'way':
-            way = self.read_element('way')
-            while way != None:
-                if number % 1000 == 0:
-                    print(number, 'of all ways has been parsed!')
-                way_attr = self.parse_attr(way)
-                children = self.parse_children(way)
-                if children != None:
-                    tag = children['tag']
-                    way_attr['tag'] = tag
-                    nds = children['nd']
-                    way_attr['nd'] = nds
-                collection.insert(way_attr)
-                way.clear()
-                way = self.read_element('way')
-                number += 1
+        buffer = []
+        buffer_size = 10000
+        for record in self.block_generator(type):
+            number += 1
+            if number % 10000 == 0:
+                print(number, 'of all {:s}s has been parsed!'.format(type))
 
-        if type == 'highway':
-            highway = self.read_element('highway')
-            while highway != None:
-                if number % 1000 == 0:
-                    print(number, 'of all highways has been parsed!')
-                number += 1
-                way_attr = self.parse_attr(highway)
-                children = self.parse_children(highway)
+            record_attr = self.parse_attr(record)
+            children = self.parse_children(record)
+            record.clear()
+            if children is not None:
+                tag = children['tag']
+                if type == 'highway' and 'highway' not in tag:
+                    continue
+                if type != 'node':
+                    record_attr['nd'] = children['nd']
+                record_attr['tag'] = tag
+            elif type == 'highway':
+                continue
+            buffer.append(record_attr)
 
-                if children != None:
-                    tag = children['tag']
-                    if 'highway' in tag:
-                        way_attr['tag'] = tag
-                        nds = children['nd']
-                        way_attr['nd'] = nds
-                        collection.insert(way_attr)
-                highway.clear()
-                highway = self.read_element('way')
+            if len(buffer) >= buffer_size:
+                collection.insert_many(buffer)
+                buffer = []
 
+        if len(buffer) != 0:
+            collection.insert_many(buffer)
+
+        self.create_index(collection)
         client.close()
 
     def dump_all_to_db(self):
@@ -178,11 +157,16 @@ class OSMParser:
         Extract nodes and ways and storage them into the database
         :return: None
         """
-        types = ['node', 'way']
+
+        types = ['highway', 'way', 'node']
+
         for type in types:
             self.dump_to_db(type)
+
+    def create_index(self, collection, field='id'):
+        collection.create_index(field, unique=True)
 
 if __name__ == '__main__':
     parser = OSMParser('../../data/HongKong.osm')
     # parser.dump_all_to_db()
-    parser.dump_to_db('highway')
+    parser.dump_to_db('node')
