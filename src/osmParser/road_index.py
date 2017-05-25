@@ -1,3 +1,11 @@
+"""
+Helpers that build sample points of highways to assist fast query.
+Notes:
+Method main() build up the sample points from the existing road collection 'highway'
+Method query_nearest_road() is a testing helper that queries the nearest highway given a coordinates.
+See test() on the usage of query_nearest_road()
+"""
+
 from math import sqrt, sin, cos, ceil
 import time
 
@@ -101,6 +109,11 @@ def build_points_from_road(node_collection, road):
     return points
 
 
+def query_nearest_road(db, coordinates):
+    sample_collection = db[SAMPLE]
+    return sample_collection.find_one({'location': {'$near': coordinates}})
+
+
 class GeoIndexBuilder(object):
 
     def __init__(self, buffer_size=100000):
@@ -179,14 +192,29 @@ class GeoIndexBuilder(object):
 
 def main():
     indexer = GeoIndexBuilder()
-    # indexer.create_index()
     results = indexer.build_points(force=True)
     if results is not None:
         print("A total of {:d} points of {:d} roads are built.".format(results[1], results[0]))
         indexer.create_sample_index()
 
 
+def test():
+    indexer = GeoIndexBuilder()
+    # indexer.create_sample_index()
+    print('Testing query')
+    p1 = [22.35678, 114.1732841]
+    p2 = [22.3465615, 114.1814336]
+    print('node 0 of road 157652772:', p1)
+    print('node 1 of road 157652772:', p2)
+    x3 = (2 * p1[0] + p2[0]) / 3.0
+    y3 = interpolate(p1[0], p1[1], p2[0], p2[1], x3)
+    print('querying', [x3, y3])
+    print(query_nearest_road(indexer.db, [x3, y3]))
+
+
 if __name__ == '__main__':
-    main()
+    # main()
+    # query_nearest_road()
     # indexer = GeoIndexBuilder()
     # indexer.create_sample_index()
+    test()
