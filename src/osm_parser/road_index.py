@@ -11,7 +11,7 @@ import time
 
 from pymongo import MongoClient, IndexModel, HASHED, GEO2D, errors
 
-from src.osmParser.OSMParser import DB, CLIENT, PORT, type_config
+from src.osm_parser.OSMParser import DB, CLIENT, PORT, type_config
 
 
 # BOUNDS = 'bounds'

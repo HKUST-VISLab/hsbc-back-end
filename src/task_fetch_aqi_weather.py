@@ -2,8 +2,8 @@
 Tasks for preprocessing
 """
 
-from src.preprocess.weather_data_helper import WeatherFetcher as WF
-from src.preprocess.air_quality_fetch_helper import fetch_and_store_air_quality
+from src.weather_AQI_fetcher.weather_data_helper import WeatherFetcher as WF
+from src.weather_AQI_fetcher.air_quality_fetch_helper import fetch_and_store_air_quality
 from src.utils import Logger, task_thread
 import time
 

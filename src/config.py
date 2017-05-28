@@ -3,8 +3,8 @@ Config Class
 """
 
 import os
-from .DB import mongodb
-from . import utils
+from src.DB import mongodb
+from src import utils
 import time
 
 class Config:
