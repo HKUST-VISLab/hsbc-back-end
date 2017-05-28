@@ -2,16 +2,16 @@ from lxml import etree
 from pymongo import MongoClient
 
 CLIENT = "127.0.0.1"
-DB = "map"
+DB = "geo_maps"
 PORT = 27017
 NODECOLLECTION = "node_test"
 WAYCOLLECTION = "way_test"
 HIGHWAY = 'highway'
 
 type_config = {
-    'node': {'collection': 'node'},
-    'way': {'collection': 'way'},
-    'highway': {'collection': 'highway'}
+    'node': {'collection': 'osm_node'},
+    'way': {'collection': 'osm_way'},
+    'highway': {'collection': 'osm_highway'}
 }
 
 
@@ -158,7 +158,7 @@ class OSMParser:
         :return: None
         """
 
-        types = ['highway', 'way', 'node']
+        types = ['node', 'way', 'highway']
 
         for type in types:
             self.dump_to_db(type)
@@ -168,5 +168,5 @@ class OSMParser:
 
 if __name__ == '__main__':
     parser = OSMParser('../../data/HongKong.osm')
-    # parser.dump_all_to_db()
-    parser.dump_to_db('node')
+    parser.dump_all_to_db()
+    # parser.dump_to_db('node')
