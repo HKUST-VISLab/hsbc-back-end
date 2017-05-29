@@ -1,7 +1,7 @@
 # from geoProjector import hk1980_to_wgs84
 import requests
 DB = 'geo_maps'
-COLLECTIONS = [{'id':'node','c_name': 'hk_node'}, {'id': 'link', 'c_name': 'hk_link'}]
+COLLECTIONS = [{'id': 'node', 'c_name': 'hk_node'}, {'id': 'link', 'c_name': 'hk_link'}]
 
 def hk1980_to_wgs84(north, east):
     """
@@ -14,6 +14,7 @@ def hk1980_to_wgs84(north, east):
                      params={'hk80-northing': north, 'hk80-easting': east})
     status_code = r.status_code
     if status_code != 200:
+        print(status_code, 'not found')
         return None
     json_data = r.json()
     obj = {
