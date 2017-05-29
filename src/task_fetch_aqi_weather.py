@@ -24,3 +24,6 @@ def run_tasks():
     for task in tasks:
         task.join(0.1)
 
+if __name__ == "__main__":
+    run_tasks()
+
