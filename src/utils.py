@@ -117,16 +117,20 @@ def task_thread(func, sleep_time, stop_time, args = None):
 
 
 if __name__ == '__main__':
-    def _test_hello(name):
-        print('Hello, '+name)
+    # def _test_hello(name):
+    #     print('Hello, '+name)
+    #
+    # p = task_thread(_test_hello, 5, 15, 'ming')
+    # p.start()
+    # encoding: UTF-8
+    from threading import Timer
 
-    p = task_thread(_test_hello, 5, 15, 'ming')
-    p.start()
-    print('hi')
-    time.sleep(5)
-    print(p, p.is_alive())
-    time.sleep(5)
-    print(p, p.is_alive())
-    print('bye')
-    p.join(2)
-    print('bye')
+
+    def function_to_be_scheduled():
+        print('test')
+        Timer(interval, function_to_be_scheduled).start()
+
+
+    interval = 2  # interval (4hours)
+
+    Timer(interval, function_to_be_scheduled).start()
