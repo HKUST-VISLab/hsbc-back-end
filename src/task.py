@@ -1,5 +1,5 @@
 """
-Tasks for preprocessing
+Tasks for all tasks
 """
 
 from src.weather_AQI_fetcher.weather_data_helper import WeatherFetcher as WF

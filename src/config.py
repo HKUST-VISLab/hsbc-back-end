@@ -87,5 +87,5 @@ class Config:
         collections = cls._db_config['weather_db']['collections']
         for collection_name in collections.values():
             if last_collection.find_one({'collection_name': collection_name}) is None:
-                timestr = time.strftime('%Y%m%d%H%M%S', time.gmtime())
+                timestr = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime())
                 last_collection.insert_one({'collection_name': collection_name, 'last_update_time': timestr})

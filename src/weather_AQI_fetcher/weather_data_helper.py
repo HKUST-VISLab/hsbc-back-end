@@ -95,7 +95,11 @@ class WeatherFetcher:
                 raw[_s_key] = raw.pop(key)
             raw['stn'] = raw.pop('StationCode')
             raw['hourly_forecast'] = raw.pop('HourlyWeatherForecast')
-            raw['time'] = str(raw.pop('LastModified'))[:12] # cut to YYYYmmddHHMM
+            # raw['time'] = str(raw.pop('LastModified'))[:12] # cut to YYYYmmddHHMM
+            raw_time = time.strptime(str(raw.pop('LastModified'))[:12], "%Y%m%d%H%M%S")
+
+            raw['time'] = time.strftime("%Y-%m-%d %H:%M:%S", raw_time)
+
             raw_daily = raw['daily_forecast']
             raw_hourly = raw['hourly_forecast']
 
@@ -149,6 +153,7 @@ class WeatherFetcher:
             self._logger.error("Unable to fetch " + collection_str + " weather data.")
             return ERROR_FETCH
         self._logger.info(collection_str + " weather data fetched.")
+
         if self._update_time(data_list[0]['time'], forecast):
             collection_handler.insert_many(data_list)
             self._logger.info("database updated successfully with " + collection_str + " weather data.")
@@ -175,7 +180,7 @@ class WeatherFetcher:
         title = raw[0][0].split()
         timestr = title[4] + '-' + title[8] + '-' + title[9] + '-' + title[10]
         tm = time.strptime(timestr, '%H:%M-%d-%B-%Y')
-        timestr = time.strftime('%Y%m%d%H%M', tm)
+        timestr = time.strftime('%Y-%m-%d %H:%M:%S', tm)
         data = []
         for row in raw[2:]:
             _dict = {}
@@ -206,6 +211,7 @@ class WeatherFetcher:
 
     @classmethod
     def _update_time(self, time_str, forecast = False):
+        print('time', time_str)
         """
         use a formatted time string to update record time. return false if not need to update
         :param time_str: a string with format "YYYYmmddHHmm..."
