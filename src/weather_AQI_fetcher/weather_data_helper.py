@@ -15,7 +15,8 @@ from src.utils import safe_open_url
 from src.config import Config
 import time
 import os.path
-
+from src.utils import time_convert
+from datetime import datetime
 # Configurations
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATION_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/station_config.json')
@@ -89,41 +90,63 @@ class WeatherFetcher:
             return raw_data
 
         for raw in raw_data:
-            key_list = ['Latitude', 'Longitude', 'ModelTime', 'DailyForecast']
-            for key in key_list:
-                _s_key = utils.camel2snake(key)
-                raw[_s_key] = raw.pop(key)
-            raw['stn'] = raw.pop('StationCode')
-            raw['hourly_forecast'] = raw.pop('HourlyWeatherForecast')
-            raw['time'] = str(raw.pop('LastModified'))[:12] # cut to YYYYmmddHHMM
-            raw_daily = raw['daily_forecast']
-            raw_hourly = raw['hourly_forecast']
+            # key_list = ['Latitude', 'Longitude', 'DailyForecast']
+            # for key in key_list:
+            #     _s_key = utils.camel2snake(key)
+            #     raw[_s_key] = raw.pop(key)
+            # raw['model_time'] = time_convert(str(raw.pop('ModelTime')), '%Y%m%d%H')
+            # raw['stn'] = raw.pop('StationCode')
+            # raw['hourly_forecast'] = raw.pop('HourlyWeatherForecast')
+            # raw['time'] = time_convert(str(raw.pop('LastModified')), '%Y%m%d%H%M%S')
+            # raw_daily = raw['daily_forecast']
+            # raw_hourly = raw['hourly_forecast']
 
+            for key in raw:
+                if key == 'ModelTime':
+                    raw[key] = time_convert(raw[key], '%Y%m%d%H')
+                elif key == 'LastModified':
+                    raw[key] = time_convert(raw[key], '%Y%m%d%H%M%S')
+                raw[utils.camel2snake(key)] = raw.pop(key)
+            try:
+                raw['loc'] = [raw.pop("latitude"), raw.pop("longitude")]
+            except Exception:
+                pass
             # turn keys in daily forecast into snake case
-            daily_key_list = [name for name in raw_daily[0]]
-            s_daily_key_list = [utils.camel2snake(name) for name in daily_key_list]
-            for onedaily in raw_daily:
-                for i, key in enumerate(s_daily_key_list):
-                    onedaily[key] = onedaily.pop(daily_key_list[i])
 
-            # turn keys in hourly forecast into snake case
-            hourly_key_list = [name for name in raw_hourly[0]]
-            s_hourly_key_list = [utils.camel2snake(name) for name in hourly_key_list]
-            formatted_hourly = []
-            hourly_weather_forecast = []
-            for onehourly in raw_hourly:
-                # deal with some incomplete data
-                if len(onehourly) > 4:
-                    _dict = {}
-                    for i, key in enumerate(s_hourly_key_list):
-                        _dict[key] = onehourly[hourly_key_list[i]]
-                    formatted_hourly.append(_dict)
-                if len(onehourly) != 5:
-                    key_list = ['ForecastWeather', 'ForecastHour']
-                    _temp = {utils.camel2snake(key): onehourly[key] for key in key_list}
-                    hourly_weather_forecast.append(_temp)
-            raw['hourly_forecast'] = formatted_hourly
-            raw['hourly_weather_forecast'] = hourly_weather_forecast
+            # daily_key_list = [name for name in raw_daily[0]]
+            # s_daily_key_list = [utils.camel2snake(name) for name in daily_key_list]
+            # for onedaily in raw_daily:
+            #     for i, key in enumerate(s_daily_key_list):
+            #         onedaily[key] = onedaily.pop(daily_key_list[i])
+            #     onedaily['forecaset_date']=time_convert(onedaily['forecast_date'], '%Y%m%d')
+            for oneday in raw['daily_forecast']:
+                for key in oneday:
+                    oneday[utils.camel2snake(key)] = oneday.pop(key)
+                oneday['forecast_date'] = time_convert(oneday['forecast_date'], '%Y%m%d')
+
+            # # turn keys in hourly forecast into snake case
+
+            # hourly_key_list = [name for name in raw_hourly[0]]
+            # s_hourly_key_list = [utils.camel2snake(name) for name in hourly_key_list]
+            # formatted_hourly = []
+            # hourly_weather_forecast = []
+            # for onehourly in raw_hourly:
+            #     # deal with some incomplete data
+            #     if len(onehourly) > 4:
+            #         _dict = {}
+            #         for i, key in enumerate(s_hourly_key_list):
+            #             _dict[key] = onehourly[hourly_key_list[i]]
+            #         formatted_hourly.append(_dict)
+            #     if len(onehourly) != 5:
+            #         key_list = ['ForecastWeather', 'ForecastHour']
+            #         _temp = {utils.camel2snake(key): onehourly[key] for key in key_list}
+            #         hourly_weather_forecast.append(_temp)
+            # raw['hourly_forecast'] = formatted_hourly
+            # raw['hourly_weather_forecast'] = hourly_weather_forecast
+            for onehour in raw['hourly_weather_forecast']:
+                for key in onehour:
+                    onehour[utils.camel2snake(key)] = onehour.pop(key)
+                onehour['forecast_hour'] = time_convert(onehour['forecast_hour'], '%Y%m%d%H')
 
         return raw_data
 
@@ -144,12 +167,18 @@ class WeatherFetcher:
         else:
             data_list = self.fetch_forecast_data()
             collection_handler = self._forecast_weather_handler
-        
+
         if isinstance(data_list, str):
             self._logger.error("Unable to fetch " + collection_str + " weather data.")
             return ERROR_FETCH
         self._logger.info(collection_str + " weather data fetched.")
-        if self._update_time(data_list[0]['time'], forecast):
+        
+        try:
+            modified_time = data_list[0]['last_modified']
+        except:
+            modified_time = data_list[0]['time']
+
+        if self._update_time(modified_time, forecast):
             collection_handler.insert_many(data_list)
             self._logger.info("database updated successfully with " + collection_str + " weather data.")
         else:
@@ -157,7 +186,6 @@ class WeatherFetcher:
 
         return SUCCESS
 
-        
     @classmethod
     def fetch_full_weather_data(self):
         """
@@ -174,8 +202,8 @@ class WeatherFetcher:
         # pre-processing
         title = raw[0][0].split()
         timestr = title[4] + '-' + title[8] + '-' + title[9] + '-' + title[10]
-        tm = time.strptime(timestr, '%H:%M-%d-%B-%Y')
-        timestr = time.strftime('%Y%m%d%H%M', tm)
+        timestr = time_convert(timestr, '%H:%M-%d-%B-%Y')
+        # timestr = time.strftime('%Y%m%d%H%M', tm)
         data = []
         for row in raw[2:]:
             _dict = {}
@@ -186,12 +214,12 @@ class WeatherFetcher:
             data.append(_dict)
 
         for row in data:
-            row['has_wind'] = False if row['winddirection'] == '' else True
-            row['has_temp'] = False if row['temp'] == '' else True
-            row['has_rh'] = False if row['rh'] == '' else True
-            row['has_grasstemp'] = False if row['grasstemp'] == '' else True
-            row['has_visibility'] = False if row['visibility'] == '' else True
-            row['has_pressure'] = False if row['pressure'] == '' else True
+            # row['has_wind'] = False if row['winddirection'] == '' else True
+            # row['has_temp'] = False if row['temp'] == '' else True
+            # row['has_rh'] = False if row['rh'] == '' else True
+            # row['has_grasstemp'] = False if row['grasstemp'] == '' else True
+            # row['has_visibility'] = False if row['visibility'] == '' else True
+            # row['has_pressure'] = False if row['pressure'] == '' else True
             row['time'] = timestr
         return data
 
@@ -212,7 +240,7 @@ class WeatherFetcher:
         :param forecast: False if not forecast.
         :return: Boolean
         """
-        time_str = str(time_str)[:12] + '00'
+        # time_str = str(time_str)[:12] + '00'
         collection_handler = Config.get_collection_handler('last_update')
         collection_name = ''
         if forecast:
@@ -302,3 +330,4 @@ if __name__ == '__main__':
     # data_list = fetch_weather_data()
     # print(a)
     WeatherFetcher.fetch_and_store_weather_data(True)
+    

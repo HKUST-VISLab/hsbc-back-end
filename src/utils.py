@@ -12,6 +12,8 @@ from urllib import request, error
 from urllib.error import HTTPError, URLError
 import csv
 import re
+from datetime import datetime
+import os
 
 
 class Logger:
@@ -30,7 +32,7 @@ class Logger:
         """
         if filename is None:
             current_str = time.strftime("%m%d%H%M", time.localtime())
-            filename = current_str+'.log'
+            filename = os.path.join('log', current_str+'.log')
         handler = logging.FileHandler(filename, 'w')
         handler.setFormatter(formatter)
         self.__logger = logging.getLogger(name)
@@ -111,10 +113,16 @@ def task_thread(func, sleep_time, stop_time, args = None):
             else:
                 func(args)
             # For more accurate period control when time length is too large
-            time.sleep(sleep_time*i + start_time - time.time())
+            sleep_interval = max(sleep_time*i + start_time - time.time(), 0)
+            time.sleep(sleep_interval)
         return 0
     return threading.Thread(target=task, args=(func, args))
 
+def time_convert(tm_str, t_format):
+    # print(tm_str)
+    if not isinstance(tm_str, str):
+        tm_str = str(tm_str)
+    return str(datetime.strptime(tm_str, t_format))
 
 if __name__ == '__main__':
     # def _test_hello(name):

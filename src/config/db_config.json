@@ -1,6 +1,6 @@
 {
   "weather_db": {
-    "db_name": "hk_weather_data",
+    "db_name": "qianwen_test",
     "host": "localhost",
     "port": 27017,
     "collections": {
@@ -8,6 +8,7 @@
       "forecast": "forecast_weather",
       "air_quality": "air_quality",
       "station": "station",
+      "air_station":"air_station",
       "weather_code": "weather_code",
       "last_update": "last_update"
     }

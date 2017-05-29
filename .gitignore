@@ -9,6 +9,8 @@ MANIFEST
 
 # logs
 *.log
+log/
+
 
 # osm file
 *.osm
@@ -16,3 +18,7 @@ MANIFEST
 config/
 data/
 data
+
+venv
+**/.DS_Store
+

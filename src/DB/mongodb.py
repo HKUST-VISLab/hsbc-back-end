@@ -2,7 +2,7 @@
 A wrapper class for manipulating mongodb
 """
 
-from .document_db import DocumentDB
+from src.DB.document_db import DocumentDB
 from pymongo import MongoClient
 
 

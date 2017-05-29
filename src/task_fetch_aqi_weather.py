@@ -13,7 +13,7 @@ AQ_INTERVAL = 1200
 
 TOTAL_RUNNING_TIME = 3600*24*7
 
-if __name__ == '__main__':
+def run_tasks():
     tasks = []
     tasks.append(task_thread(WF.fetch_and_store_weather_data, CURRENT_INTERVAL, TOTAL_RUNNING_TIME, False))
     tasks.append(task_thread(WF.fetch_and_store_weather_data, FORECAST_INTERVAL, TOTAL_RUNNING_TIME, True))
