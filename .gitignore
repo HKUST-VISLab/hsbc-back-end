@@ -9,6 +9,7 @@ MANIFEST
 
 # logs
 *.log
+log/
 
 venv
 **/.DS_Store

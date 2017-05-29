@@ -107,7 +107,10 @@ class WeatherFetcher:
                 elif key == 'LastModified':
                     raw[key] = time_convert(raw[key], '%Y%m%d%H%M%S')
                 raw[utils.camel2snake(key)] = raw.pop(key)
-
+            try:
+                raw['loc'] = [raw.pop("latitude"), raw.pop("longitude")]
+            except Exception:
+                pass
             # turn keys in daily forecast into snake case
 
             # daily_key_list = [name for name in raw_daily[0]]
