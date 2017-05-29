@@ -7,8 +7,8 @@ extract info from collections: get_station_from_code(), get_weather_from_code()
 """
 
 import os
-from .DB import mongodb
-from . import utils
+from src.DB import mongodb
+from src import utils
 import time
 from datetime import datetime
 

@@ -11,5 +11,14 @@ MANIFEST
 *.log
 log/
 
+
+# osm file
+*.osm
+
+config/
+data/
+data
+
 venv
 **/.DS_Store
+

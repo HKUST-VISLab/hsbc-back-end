@@ -1,2 +1,5 @@
 # mongodb python interface
 pymongo==3.3.1
+bs4
+requests
+lxml
