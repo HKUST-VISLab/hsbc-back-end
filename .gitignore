@@ -15,7 +15,6 @@ log/
 # osm file
 *.osm
 
-config/
 data/
 data
 
