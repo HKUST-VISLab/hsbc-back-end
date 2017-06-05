@@ -297,7 +297,7 @@ class ModelProcessor:
                 continue
             print("Start parsing ", filename)
             self.__parser_single_file(filename)
-        self.__parser_folder()
+
 if __name__ == '__main__':
     processor = ModelProcessor()
     processor.parse_folder()
