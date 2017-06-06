@@ -1,5 +1,6 @@
 import os
 import time
+import json
 
 from pymongo import MongoClient
 
@@ -97,7 +98,7 @@ class ModelProcessor:
             self.unit = attr_unit_trans[self.weather_attr][line_segs[0]]
         else:
             self.unit = line_segs[0]
-        print('unit: ', line_segs, self.unit)
+        print('unit: ', self.unit)
         self.unit_flag = False
         return
 
@@ -220,7 +221,6 @@ class ModelProcessor:
 
         file_path = self.__get_file_path_by_name(filename)
         num = 0
-        print('num： ', num)
         with open(file_path, 'r') as input:
             line = input.readline()
             while line:
@@ -276,7 +276,6 @@ class ModelProcessor:
                         self.first_data_flag = False
                     previous_line = parse_result
                 if (not parse_result) and self.unit_flag and previous_line:
-                    print('hello line: ', self.weather_attr, line)
                     last_record_list.append(previous_line)
                 line = input.readline()
             last_record_list.append(previous_line)
@@ -294,12 +293,8 @@ class ModelProcessor:
         :return:
         """
         file_info = self.__get_first_and_last_record_list(filename)
-        print('file_info: ', file_info)
         first_record_list = file_info['first_record']
         last_record_list = file_info['last_record']
-        print('len(first_record_list): ', len(first_record_list))
-        print('len(last_record_list): ', len(last_record_list))
-
         assert len(first_record_list) == len(last_record_list)
 
         for idx in range(len(first_record_list)):
@@ -318,18 +313,11 @@ class ModelProcessor:
         :return: True if record existed, False not
         """
         for idx in range(self.current_station_num):
-            # search_key = {
-            #     'latitude': {'$eq': self.current_latitude_list[idx]},
-            #     'longitude': {'$eq': self.current_longitude_list[idx]},
-            #     'time': {'$eq': parse_result['time']},
-            #     self.unit: {'$exists': True, '$nin': [None]},
-            #     self.current_station_list[idx]: {'$exists': True, '$nin': [None]}
-            # }
             search_key = {
                 'loc': {'$eq': [float(self.current_latitude_list[idx]), float(self.current_longitude_list[idx])]},
                 'time': {'$eq': parse_result['time']},
                 self.unit: {'$exists': True, '$nin': [None]},
-                self.current_station_list[idx]: {'$exists': True, '$nin': [None]}
+                'station_code': {'$exists': True, '$nin': [None]}
             }
             records = list(self.model_collection.find(search_key))
             if len(records) == 0:
@@ -354,15 +342,57 @@ class ModelProcessor:
         Based on the csv files in the specific folder, generate configure file.
         :return:
         """
+        station_list = []
+        latitude_list = []
+        longitude_list = []
+
         filenames = [f for f in os.listdir(self.data_folder) if os.path.isfile(os.path.join(self.data_folder, f))]
         for filename in filenames:
             file_path = self.__get_file_path_by_name(filename)
-            
+            with open(file_path, 'r') as input:
+                line = input.readline()
+                while line:
+                    line_segs = line.strip().split(',')
+                    line_segs = [
+                        seg.strip()[1:-1] if seg.strip().startswith('"') and seg.strip().endswith('"') else seg.strip()
+                        for seg in line_segs]
+                    if 'Station ID' == line_segs[0]:
+                        station_list.append(line_segs[1:])
+                    if 'Latitude' == line_segs[0]:
+                        latitude_list.append(line_segs[1:])
+                    if 'Longitude' == line_segs[0]:
+                        longitude_list.append(line_segs[1:])
+                    line = input.readline()
 
+        weather_config_tmp = {}
+        weather_config = []
+        for attr_idx in range(len(station_list)):
+            for station_idx in range(len(station_list[attr_idx])):
+                lat_lon = '{}_{}'.format(latitude_list[attr_idx][station_idx], longitude_list[attr_idx][station_idx])
+                station_code = station_list[attr_idx][station_idx]
+                if lat_lon not in weather_config_tmp:
+                    weather_config_tmp[lat_lon] = []
+                    weather_config_tmp[lat_lon].append(station_code)
+        print('weather_config: ', weather_config_tmp)
+        print('len(weather_config): ', len(weather_config_tmp))
+        for lat_lon in weather_config_tmp:
+            station_code_set = set(weather_config_tmp[lat_lon])
+            assert len(station_code_set) == 1
+            station_code = list(station_code_set)[0]
+            if station_code == 'N/A':
+                station_code = lat_lon
+            lat_lon_seg = lat_lon.split('_')
+            weather_config.append({'loc': [float(lat_lon_seg[0]), float(lat_lon_seg[1])], 'station_code': station_code})
+
+        weather_config_path = os.path.join(self.current_dir, '../config/weather_hkust_config.json')
+
+        with open(weather_config_path, 'w') as inputfile:
+            json.dump(weather_config, inputfile)
         return
 
 
 if __name__ == '__main__':
     processor = ModelProcessor()
     # processor.parser_single_file('A_WIND-20170501-20170505.csv')
-    processor.parse_folder()
+    # processor.parse_folder()
+    processor.generate_config()
