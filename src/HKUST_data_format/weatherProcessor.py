@@ -23,7 +23,7 @@ attr_unit_trans = {
     'relative_humidity': {'%': 'relative_humidity'},
     'temperature': {'Degree Celsius': 'temperature'}
 }
-station_id_trans = {
+station_code_trans = {
     'N/A': 'N/A'
 }
 
@@ -107,9 +107,20 @@ class ModelProcessor:
         :param line_segs:
         :return:
         """
-        self.current_station_list = [seg if not (seg in station_id_trans) else station_id_trans[seg] for seg in
-                                     line_segs[1:]]
+        # self.current_station_list = [seg if not (seg in station_code_trans) else station_code_trans[seg] for seg in
+        #                              line_segs[1:]]
+        self.current_station_list = line_segs[1:]
         print('current_station_list: ', self.current_station_list)
+        return
+
+    def __update_station_list(self):
+        """
+        update station list,  N/A -> latitude_longitude
+        :return:
+        """
+        for idx in range(self.current_station_num):
+            if self.current_station_list[idx] == 'N/A':
+                self.current_station_list[idx] = '{}_{}'.format(self.current_latitude_list, self.current_longitude_list)
         return
 
     def __get_latitude_list(self, line_segs):
@@ -118,7 +129,8 @@ class ModelProcessor:
         :param line_segs:
         :return:
         """
-        self.current_latitude_list = [float(seg) for seg in line_segs[1:]]
+        # self.current_latitude_list = [float(seg) for seg in line_segs[1:]]
+        self.current_latitude_list = line_segs[1:]
         print('current_latitude_list: ', self.current_latitude_list)
         return
 
@@ -128,7 +140,10 @@ class ModelProcessor:
         :param line_segs:
         :return:
         """
-        self.current_longitude_list = [float(seg) for seg in line_segs[1:]]
+        # self.current_longitude_list = [float(seg) for seg in line_segs[1:]]
+        self.current_longitude_list = line_segs[1:]
+        # update station list
+        self.__update_station_list()
         print('current_longitude_list: ', self.current_longitude_list)
         return
 
@@ -185,7 +200,7 @@ class ModelProcessor:
             time_stamp = time.strptime(time_stamp, "%Y/%m/%d %H:%M:%S")
             time_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time_stamp)
             try:
-                context = [float(seg) for seg in line_segs[1:]]
+                context = [float(seg) if float(seg) != -99999 else None for seg in line_segs[1:]]
             except ValueError:
                 print('error in line context, float()')
                 return
@@ -211,7 +226,6 @@ class ModelProcessor:
             while line:
                 parse_result = self.__parse_context_line(line)
                 if parse_result:
-                    print('result: ', parse_result)
                     self.__insert_one_record(parse_result)
                 line = input.readline()
                 num += 1
@@ -232,11 +246,11 @@ class ModelProcessor:
         :return:
         """
         for idx in range(self.current_station_num):
-            search_key = {'latitude': self.current_latitude_list[idx],
-                          'longitude': self.current_longitude_list[idx],
+            search_key = {'loc': [float(self.current_latitude_list[idx]), float(self.current_longitude_list[idx])],
                           'time': parse_result['time']}
             update_context = {self.unit: parse_result['context'][idx],
-                              'station_id': self.current_station_list[idx]}
+                              'station_code': self.current_station_list[idx]}
+
             self.model_collection.find_one_and_update(search_key,
                                                       {'$set': update_context},
                                                       upsert=True)
@@ -261,7 +275,8 @@ class ModelProcessor:
                         first_record_list.append(parse_result)
                         self.first_data_flag = False
                     previous_line = parse_result
-                if (not parse_result) and self.unit_flag and (not self.first_data_flag):
+                if (not parse_result) and self.unit_flag and previous_line:
+                    print('hello line: ', self.weather_attr, line)
                     last_record_list.append(previous_line)
                 line = input.readline()
             last_record_list.append(previous_line)
@@ -279,8 +294,11 @@ class ModelProcessor:
         :return:
         """
         file_info = self.__get_first_and_last_record_list(filename)
+        print('file_info: ', file_info)
         first_record_list = file_info['first_record']
         last_record_list = file_info['last_record']
+        print('len(first_record_list): ', len(first_record_list))
+        print('len(last_record_list): ', len(last_record_list))
 
         assert len(first_record_list) == len(last_record_list)
 
@@ -300,9 +318,15 @@ class ModelProcessor:
         :return: True if record existed, False not
         """
         for idx in range(self.current_station_num):
+            # search_key = {
+            #     'latitude': {'$eq': self.current_latitude_list[idx]},
+            #     'longitude': {'$eq': self.current_longitude_list[idx]},
+            #     'time': {'$eq': parse_result['time']},
+            #     self.unit: {'$exists': True, '$nin': [None]},
+            #     self.current_station_list[idx]: {'$exists': True, '$nin': [None]}
+            # }
             search_key = {
-                'latitude': {'$eq': self.current_latitude_list[idx]},
-                'longitude': {'$eq': self.current_longitude_list[idx]},
+                'loc': {'$eq': [float(self.current_latitude_list[idx]), float(self.current_longitude_list[idx])]},
                 'time': {'$eq': parse_result['time']},
                 self.unit: {'$exists': True, '$nin': [None]},
                 self.current_station_list[idx]: {'$exists': True, '$nin': [None]}
@@ -325,9 +349,20 @@ class ModelProcessor:
             print("Start parsing ", filename)
             self.__parser_single_file(filename)
 
+    def generate_config(self):
+        """
+        Based on the csv files in the specific folder, generate configure file.
+        :return:
+        """
+        filenames = [f for f in os.listdir(self.data_folder) if os.path.isfile(os.path.join(self.data_folder, f))]
+        for filename in filenames:
+            file_path = self.__get_file_path_by_name(filename)
+            
+
+        return
+
 
 if __name__ == '__main__':
     processor = ModelProcessor()
     # processor.parser_single_file('A_WIND-20170501-20170505.csv')
     processor.parse_folder()
-
