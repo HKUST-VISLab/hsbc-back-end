@@ -3,6 +3,7 @@ import time
 import json
 
 from pymongo import MongoClient
+from pymongo import GEOSPHERE
 
 """
 Global config, to match the data to the database
@@ -39,7 +40,6 @@ class ModelProcessor:
     print('os.path.abspath(__file__): ', os.path.abspath(__file__))
     print('current_dir: ', current_dir)
     data_folder = os.path.join(current_dir, '../../data/weather')
-    # data_folder = r'D:\Users\zhp\project\HSBC\hsbc-back-end\data\AQIModel'
     print('data_folder: ', data_folder)
 
     def __init__(self):
@@ -60,6 +60,7 @@ class ModelProcessor:
         self.client = MongoClient(HOST, PORT)
         self.db = self.client[DB]
         self.model_collection = self.db[COLLECTION]
+        self.model_collection.create_index([('loc', GEOSPHERE)])
         return
 
     def __get_weather_attribute(self, line_segs):
@@ -246,7 +247,7 @@ class ModelProcessor:
         :return:
         """
         for idx in range(self.current_station_num):
-            search_key = {'loc': [float(self.current_latitude_list[idx]), float(self.current_longitude_list[idx])],
+            search_key = {'loc': [float(self.current_longitude_list[idx]), float(self.current_latitude_list[idx])],
                           'time': parse_result['time']}
             update_context = {self.unit: parse_result['context'][idx],
                               'station_code': self.current_station_list[idx]}
@@ -314,7 +315,7 @@ class ModelProcessor:
         """
         for idx in range(self.current_station_num):
             search_key = {
-                'loc': {'$eq': [float(self.current_latitude_list[idx]), float(self.current_longitude_list[idx])]},
+                'loc': {'$eq': [float(self.current_longitude_list[idx]), float(self.current_latitude_list[idx])]},
                 'time': {'$eq': parse_result['time']},
                 self.unit: {'$exists': True, '$nin': [None]},
                 'station_code': {'$exists': True, '$nin': [None]}
@@ -394,5 +395,5 @@ class ModelProcessor:
 if __name__ == '__main__':
     processor = ModelProcessor()
     # processor.parser_single_file('A_WIND-20170501-20170505.csv')
-    # processor.parse_folder()
-    processor.generate_config()
+    processor.parse_folder()
+    # processor.generate_config()
