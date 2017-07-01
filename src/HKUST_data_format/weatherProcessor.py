@@ -72,7 +72,7 @@ class ModelProcessor:
         line_param = line_segs[0].split(' ')
         attr = '_'.join(line_param[1:len(line_param) - 1])
         self.weather_attr = attr if attr not in attr_trans else attr_trans[attr]
-        print('weather_attr: ', self.weather_attr)
+        # print('weather_attr: ', self.weather_attr)
         return
 
     def __get_station_num(self, line_segs):
@@ -86,7 +86,7 @@ class ModelProcessor:
         except ValueError:
             print('error in No. of stations')
             return
-        print('current_station_num: ', self.current_station_num)
+        # print('current_station_num: ', self.current_station_num)
         return
 
     def __get_unit(self, line_segs):
@@ -99,7 +99,7 @@ class ModelProcessor:
             self.unit = attr_unit_trans[self.weather_attr][line_segs[0]]
         else:
             self.unit = line_segs[0]
-        print('unit: ', self.unit)
+        # print('unit: ', self.unit)
         self.unit_flag = False
         return
 
@@ -112,7 +112,7 @@ class ModelProcessor:
         # self.current_station_list = [seg if not (seg in station_code_trans) else station_code_trans[seg] for seg in
         #                              line_segs[1:]]
         self.current_station_list = line_segs[1:]
-        print('current_station_list: ', self.current_station_list)
+        # print('current_station_list: ', self.current_station_list)
         return
 
     def __update_station_list(self):
@@ -133,7 +133,7 @@ class ModelProcessor:
         """
         # self.current_latitude_list = [float(seg) for seg in line_segs[1:]]
         self.current_latitude_list = line_segs[1:]
-        print('current_latitude_list: ', self.current_latitude_list)
+        # print('current_latitude_list: ', self.current_latitude_list)
         return
 
     def __get_longitude_list(self, line_segs):
@@ -146,7 +146,7 @@ class ModelProcessor:
         self.current_longitude_list = line_segs[1:]
         # update station list
         self.__update_station_list()
-        print('current_longitude_list: ', self.current_longitude_list)
+        # print('current_longitude_list: ', self.current_longitude_list)
         return
 
     def __parse_context_line(self, line):
@@ -216,7 +216,7 @@ class ModelProcessor:
         :param filename: the file name (not path)
         :return:
         """
-        print('filename: ', filename)
+        # print('filename: ', filename)
         if not filename.endswith('.csv'):
             return None
 
@@ -374,8 +374,8 @@ class ModelProcessor:
                 if lon_lat not in weather_config_tmp:
                     weather_config_tmp[lon_lat] = []
                     weather_config_tmp[lon_lat].append(station_code)
-        print('weather_config: ', weather_config_tmp)
-        print('len(weather_config): ', len(weather_config_tmp))
+        # print('weather_config: ', weather_config_tmp)
+        # print('len(weather_config): ', len(weather_config_tmp))
         for lon_lat in weather_config_tmp:
             station_code_set = set(weather_config_tmp[lon_lat])
             assert len(station_code_set) == 1
