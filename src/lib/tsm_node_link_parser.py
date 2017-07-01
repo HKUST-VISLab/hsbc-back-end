@@ -29,18 +29,20 @@ def read_nodes_from_seg(seg_obj):
     :param seg_obj:
     :return: array for the two elements
     """
+    p1 = hk1980_to_wgs84(float(seg_obj["Start_Node_Northings"])
+                                    , float(seg_obj["Start_Node_Eastings"]))
     first_node = {
         'id': seg_obj['Start_Node'],
         'hk80': [seg_obj["Start_Node_Northings"], seg_obj["Start_Node_Eastings"]],
-        'position': hk1980_to_wgs84(float(seg_obj["Start_Node_Northings"])
-                                    , float(seg_obj["Start_Node_Eastings"]))
+        'position': [p1[1], p1[0]]
     }
 
+    p2 = hk1980_to_wgs84(float(seg_obj["End_Node_Northings"])
+                                    , float(seg_obj["End_Node_Eastings"]))
     second_node = {
         'id': seg_obj['End_Node'],
         'hk80': [seg_obj["End_Node_Northings"], seg_obj["End_Node_Eastings"]],
-        'position': hk1980_to_wgs84(float(seg_obj["End_Node_Northings"])
-                                    , float(seg_obj["End_Node_Eastings"]))
+        'position': [p2[1], p1[0]]
     }
 
     return [first_node, second_node]
