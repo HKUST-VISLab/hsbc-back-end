@@ -368,21 +368,21 @@ class ModelProcessor:
         weather_config = []
         for attr_idx in range(len(station_list)):
             for station_idx in range(len(station_list[attr_idx])):
-                lat_lon = '{}_{}'.format(latitude_list[attr_idx][station_idx], longitude_list[attr_idx][station_idx])
+                lon_lat = '{}_{}'.format(longitude_list[attr_idx][station_idx], latitude_list[attr_idx][station_idx])
                 station_code = station_list[attr_idx][station_idx]
-                if lat_lon not in weather_config_tmp:
-                    weather_config_tmp[lat_lon] = []
-                    weather_config_tmp[lat_lon].append(station_code)
+                if lon_lat not in weather_config_tmp:
+                    weather_config_tmp[lon_lat] = []
+                    weather_config_tmp[lon_lat].append(station_code)
         print('weather_config: ', weather_config_tmp)
         print('len(weather_config): ', len(weather_config_tmp))
-        for lat_lon in weather_config_tmp:
-            station_code_set = set(weather_config_tmp[lat_lon])
+        for lon_lat in weather_config_tmp:
+            station_code_set = set(weather_config_tmp[lon_lat])
             assert len(station_code_set) == 1
             station_code = list(station_code_set)[0]
             if station_code == 'N/A':
-                station_code = lat_lon
-            lat_lon_seg = lat_lon.split('_')
-            weather_config.append({'loc': [float(lat_lon_seg[0]), float(lat_lon_seg[1])], 'station_code': station_code})
+                station_code = lon_lat
+            lon_lat_seg = lon_lat.split('_')
+            weather_config.append({'loc': [float(lon_lat_seg[0]), float(lon_lat_seg[1])], 'station_code': station_code})
 
         weather_config_path = os.path.join(self.current_dir, '../config/weather_hkust_config.json')
 
