@@ -16,14 +16,28 @@ data_schema_trans = {
 attr_trans = {
     'Relative_Humidity': 'relative_humidity',
     'Temperature': 'temperature',
-    'Wind': 'wind'
+    'Wind': 'wind',
+    'Cloud_Cover': 'cloud_cover',
+    'Dew_Point': 'dew_point',
+    'Irradiance': 'irradiance',
+    'Station_Pressure': 'station_pressure',
+    'Precipitation': 'precipitation',
+    'Visibility_-_SYNOP': 'visibility_synop'
 }
 
 attr_unit_trans = {
     'wind': {'m/s': 'wind_speed',
              'Degree': 'wind_direction'},
     'relative_humidity': {'%': 'relative_humidity'},
-    'temperature': {'Degree Celsius': 'temperature'}
+    'temperature': {'Degree Celsius': 'temperature'},
+    'cloud_cover': {'None': 'cloud_cover'},
+    'dew_point': {'Degree Celsius': 'dew_point'},
+    'irradiance': {'w/m2': 'irradiance'},
+    'station_pressure': {'Pascal': 'station_pressure'},
+    'precipitation': {'mm': 'precipitation_size',
+                      'Hour': 'precipitation_hour'},
+    'visibility_synop': {'m': 'visibility_synop'}
+
 }
 station_code_trans = {
     'N/A': 'N/A'
@@ -122,7 +136,7 @@ class ModelProcessor:
         """
         for idx in range(self.current_station_num):
             if self.current_station_list[idx] == 'N/A':
-                self.current_station_list[idx] = '{}_{}'.format(self.current_latitude_list, self.current_longitude_list)
+                self.current_station_list[idx] = '{}_{}'.format(float(self.current_longitude_list[idx]), float(self.current_latitude_list[idx]))
         return
 
     def __get_latitude_list(self, line_segs):
@@ -395,5 +409,6 @@ class ModelProcessor:
 if __name__ == '__main__':
     processor = ModelProcessor()
     # processor.parser_single_file('A_WIND-20170501-20170505.csv')
-    processor.parse_folder()
+    # processor.parse_folder()
     # processor.generate_config()
+    # processor.parser_single_file('A_WIND-20160601-20170531.csv')
