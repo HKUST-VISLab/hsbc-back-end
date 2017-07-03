@@ -4,6 +4,7 @@ import json
 
 from pymongo import MongoClient
 from pymongo import GEOSPHERE
+from pymongo import ASCENDING
 
 """
 Global config, to match the data to the database
@@ -75,6 +76,7 @@ class ModelProcessor:
         self.db = self.client[DB]
         self.model_collection = self.db[COLLECTION]
         self.model_collection.create_index([('loc', GEOSPHERE)])
+        self.model_collection.create_index([('time', ASCENDING)])
         return
 
     def __get_weather_attribute(self, line_segs):
@@ -409,6 +411,6 @@ class ModelProcessor:
 if __name__ == '__main__':
     processor = ModelProcessor()
     # processor.parser_single_file('A_WIND-20170501-20170505.csv')
-    # processor.parse_folder()
+    processor.parse_folder()
     # processor.generate_config()
     # processor.parser_single_file('A_WIND-20160601-20170531.csv')
