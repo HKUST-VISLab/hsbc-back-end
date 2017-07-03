@@ -171,10 +171,12 @@ class ModelProcessor:
                     continue
                 if result['type'] == 'schema':
                     self.current_schemas = result['context']
+                #  Should init index for the new attributes
+
                 if result['type'] == 'data':
                     parse_result = self.__generate_record_dict_from_list(result['context'])
                     num += 1
-                    self.__insert_one_record(AQI,station_code, parse_result)
+                    self.__insert_one_record(AQI, station_code, parse_result)
 
                 line = input.readline()
             print(num)
