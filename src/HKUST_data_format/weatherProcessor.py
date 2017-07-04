@@ -77,6 +77,12 @@ class ModelProcessor:
         self.model_collection = self.db[COLLECTION]
         self.model_collection.create_index([('loc', GEOSPHERE)])
         self.model_collection.create_index([('time', ASCENDING)])
+
+        # station config file
+        self.db_config = self.client['hk_weather_data']
+        self.weather_station = self.db_config['weather_station_hkust']
+        self.weather_station.create_index([('loc', GEOSPHERE)])
+        self.weather_station.create_index([('station_code', ASCENDING)])
         return
 
     def __get_weather_attribute(self, line_segs):
@@ -405,12 +411,36 @@ class ModelProcessor:
 
         with open(weather_config_path, 'w') as inputfile:
             json.dump(weather_config, inputfile)
+
+        self.__insert_config_file_to_db(weather_config)
         return
 
+    def __insert_config_file_to_db(self, weather_config):
+        for config_record in weather_config:
+            self.__insert_one_config_record(config_record)
+        return
+
+    def __insert_one_config_record(self, config_record):
+        """
+        Insert one record. If record existed, update with new attributes, if not, create a new record
+        Search key: latitude, longitude, station_code
+        update: self.unit
+        :param parse_result:
+        :return:
+        """
+        search_key = {'loc': config_record['loc'],
+                      'station_code': config_record['station_code']}
+        update_context = {'loc': config_record['loc'],
+                          'station_code': config_record['station_code']}
+
+        self.weather_station.find_one_and_update(search_key,
+                                                 {'$set': update_context},
+                                                 upsert=True)
+        return
 
 if __name__ == '__main__':
     processor = ModelProcessor()
     # processor.parser_single_file('A_WIND-20170501-20170505.csv')
-    processor.parse_folder()
-    # processor.generate_config()
+    # processor.parse_folder()
+    processor.generate_config()
     # processor.parser_single_file('A_WIND-20160601-20170531.csv')
