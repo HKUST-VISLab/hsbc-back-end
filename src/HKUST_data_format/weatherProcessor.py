@@ -222,7 +222,8 @@ class ModelProcessor:
             assert self.current_station_num + 1 == len(line_segs)
             time_stamp = line_segs[0]
             time_stamp = time.strptime(time_stamp, "%Y/%m/%d %H:%M:%S")
-            time_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time_stamp)
+            # time_stamp = time.strftime("%Y-%m-%d %H:%M:%S", time_stamp)
+            time_stamp = time.mktime(time_stamp)
             try:
                 context = [float(seg) if float(seg) != -99999 else None for seg in line_segs[1:]]
             except ValueError:
@@ -441,6 +442,6 @@ class ModelProcessor:
 if __name__ == '__main__':
     processor = ModelProcessor()
     # processor.parser_single_file('A_WIND-20170501-20170505.csv')
-    # processor.parse_folder()
-    processor.generate_config()
+    processor.parse_folder()
+    # processor.generate_config()
     # processor.parser_single_file('A_WIND-20160601-20170531.csv')
