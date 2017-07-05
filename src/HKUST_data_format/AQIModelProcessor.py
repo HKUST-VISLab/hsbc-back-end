@@ -34,6 +34,8 @@ class ModelProcessor:
         self.client = MongoClient(HOST, PORT)
         self.db = self.client[DB]
         self.model_collection = self.db[COLLECTION]
+        self.model_collection.create_index('station_code')
+        self.model_collection.create_index('time')
 
 
     def __read_station_config(self):
@@ -142,10 +144,12 @@ class ModelProcessor:
             value = segs[index]
             if schema == 'time':
                 value = time.strptime(value, "%Y/%m/%d %H:%M:%S")
-                value = time.strftime("%Y-%m-%d %H:%M:%S", value)
+                # value = time.strftime("%Y-%m-%d %H:%M:%S", value)
+                value = time.mktime(value)
             value = None if value == '' else value
             parse_result[schema] = value
         return parse_result
+
 
     def __parser_single_file(self, filename):
         """
@@ -171,6 +175,7 @@ class ModelProcessor:
                     continue
                 if result['type'] == 'schema':
                     self.current_schemas = result['context']
+                    print(self.current_schemas)
                 #  Should init index for the new attributes
 
                 if result['type'] == 'data':
@@ -259,9 +264,8 @@ class ModelProcessor:
             if schema == 'time':
                 search_key[schema] = record_dict[schema]
             else:
-                key = str(AQI) + '.' + schema
-                update_context[key] = record_dict[schema]
-
+                _key = str(AQI) + '.' + schema
+                update_context[_key] = record_dict[schema]
         self.model_collection.find_one_and_update(search_key,
                                                   {'$set': update_context},
                                                   upsert=True)
@@ -300,6 +304,13 @@ class ModelProcessor:
             print("Start parsing ", filename)
             self.__parser_single_file(filename)
 
+
+    def test(self):
+        filename = '../../data/AQIModel/NO2-Sha_Tin.csv'
+
+        self.__parser_single_file(filename)
+
 if __name__ == '__main__':
     processor = ModelProcessor()
     processor.parse_folder()
+    # processor.test()
