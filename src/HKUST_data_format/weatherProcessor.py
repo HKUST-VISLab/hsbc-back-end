@@ -80,7 +80,7 @@ class ModelProcessor:
 
         # station config file
         self.db_config = self.client['hk_weather_data']
-        self.weather_station = self.db_config['weather_station_hkust']
+        self.weather_station = self.db_config['weather_stations_hkust']
         self.weather_station.create_index([('loc', GEOSPHERE)])
         self.weather_station.create_index([('station_code', ASCENDING)])
         return
