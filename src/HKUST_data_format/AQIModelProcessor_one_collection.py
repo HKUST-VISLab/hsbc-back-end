@@ -1,5 +1,3 @@
-# Storage data into mulitple collections. Each station one collection
-
 import os
 import time
 
@@ -22,9 +20,9 @@ data_schema_trans = {
 HOST = '127.0.0.1'
 PORT = 27017
 DB = 'air_quality_model_hkust'
-# COLLECTION = 'air_quality_model_hkust'
-# DB = 'test_model_hkust'
 COLLECTION = 'air_quality_model_hkust'
+# DB = 'test_model_hkust'
+# COLLECTION = 'air_quality_model_hkust'
 class ModelProcessor:
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_folder = os.path.join(current_dir, '../config/air_station_hkust_config.json')
@@ -39,7 +37,7 @@ class ModelProcessor:
         self.model_collection = self.db[COLLECTION]
         self.model_collection.create_index('station_code')
         self.model_collection.create_index('time')
-        self.current_collection = None
+
 
     def __read_station_config(self):
         """
@@ -121,11 +119,11 @@ class ModelProcessor:
             return None
 
         if context_type == 'schema':
+
             for schema in line_segs:
                 schema = schema if schema not in data_schema_trans else data_schema_trans[schema]
                 schema = schema.split(':')[0]
                 parse_result.append(schema)
-
         elif context_type == 'data':
             parse_result = line_segs
 
@@ -154,25 +152,19 @@ class ModelProcessor:
         return parse_result
 
 
-    def __parser_single_file(self, filename, sub_dir):
+    def __parser_single_file(self, filename):
         """
         Parse single file
         :param filename: the file name (not path)
         :return:
         """
-        file_path = self.__get_file_path_by_name(filename, sub_dir)
+        file_path = self.__get_file_path_by_name(filename)
         filename_dict = self.__parse_filename(filename)
         if filename_dict == None:
             return None
         AQI = filename_dict['AQI']
         station_name = filename_dict['station_name']
         station_code = filename_dict['station_code']
-        collection_name = "AQI_"+station_code
-
-        if collection_name not in self.db.collection_names():
-            self.model_collection = self.db[collection_name]
-            self.model_collection.create_index('time')
-        self.model_collection = self.db[collection_name]
         num = 0
         with open(file_path, 'r') as input:
             line = input.readline()
@@ -184,6 +176,7 @@ class ModelProcessor:
                     continue
                 if result['type'] == 'schema':
                     self.current_schemas = result['context']
+                    print(self.current_schemas)
                 #  Should init index for the new attributes
 
                 if result['type'] == 'data':
@@ -194,19 +187,18 @@ class ModelProcessor:
                 line = input.readline()
             print(num)
 
-    def __get_file_path_by_name(self, filename, subfolder = ""):
-        file_path = os.path.join(self.data_folder, subfolder)
-        file_path = os.path.join(file_path, filename)
+    def __get_file_path_by_name(self, filename):
+        file_path = os.path.join(self.data_folder, filename)
         return file_path
 
 
-    def __get_first_and_last_records(self, filename, sub_dir):
+    def __get_first_and_last_records(self, filename):
         """
         Read first and last record from the file, also get AQI and station information from the filename
         :param filename:
         :return:
         """
-        file_path = self.__get_file_path_by_name(filename, sub_dir)
+        file_path = self.__get_file_path_by_name(filename)
         first_record = None
         last_record = None
         previous_line = None
@@ -224,7 +216,6 @@ class ModelProcessor:
                 if not first_record:
                     r = self.__parse_context_line(line)
                     if r['type'] == 'schema':
-                        # print('rr', r['context'])
                         self.current_schemas = r['context']
                         line = input.readline()
                         continue
@@ -232,22 +223,21 @@ class ModelProcessor:
                         line = input.readline()
                         continue
                     first_record = self.__generate_record_dict_from_list(r['context'])
-                previous_line = line if line.strip() != "" else previous_line
+                previous_line = line
                 line = input.readline()
 
         last_record = self.__generate_record_dict_from_list(self.__parse_context_line(previous_line)['context'])
         return {'first_record': first_record, 'last_record': last_record, 'AQI': AQI, 'station_name': station_name, 'station_code': station_code}
 
 
-    def __check_file_parsed_and_saved(self, filename, sub_dir):
+    def __check_file_parsed_and_saved(self, filename):
         """
         Check if one file has been parsed and saved into db. Assume all the records are sorted by the time,
         only first record and last record are checked, if all of them are found in the database, we say this file has been parsed
         :param filename:
         :return:
         """
-        file_info = self.__get_first_and_last_records(filename, sub_dir)
-
+        file_info = self.__get_first_and_last_records(filename)
         first_record = file_info['first_record']
         last_record = file_info['last_record']
 
@@ -269,8 +259,7 @@ class ModelProcessor:
         :param record_dict:
         :return:
         """
-        # search_key = {'station_code': station_code}
-        search_key = {}
+        search_key = {'station_code': station_code}
         update_context = {}
         for schema in self.current_schemas:
             if schema == 'time':
@@ -290,22 +279,16 @@ class ModelProcessor:
         :param record_dict:
         :return: True if record existed, False not
         """
-        # search_key = {
-        #     'station_code': {'$eq': station_code}
-        # }
-
-        search_key = {}
+        search_key = {
+            'station_code': {'$eq': station_code}
+        }
         for schema in self.current_schemas:
             if schema == 'time':
                 search_key[schema] = {'$eq': record_dict[schema]}
             else:
                 key = str(AQI) + '.' + schema
                 search_key[key] = {'$exists': True, '$nin': [None]}
-        collection_name = "AQI_" + station_code
-        collection = self.db[collection_name]
-
-        records = list(collection.find(search_key))
-
+        records = list(self.model_collection.find(search_key))
         return True if len(records) != 0 else False
 
 
@@ -314,30 +297,13 @@ class ModelProcessor:
         Parse all the csv files in the specific folder. If one file is detected parsed, if will be ignored
         :return:
         """
-        dirs = [f for f in os.listdir(self.data_folder) if os.path.isdir(os.path.join(self.data_folder, f))]
-        files = []
-        for dir in dirs:
-            dir_path = os.path.join(self.data_folder, dir)
-            filename_objs = [{'filename': f, 'sub_dir': dir} for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
-            files += filename_objs
-
-        for file_obj in files:
-            filename = file_obj['filename']
-            sub_dir = file_obj['sub_dir']
-            if self.__check_file_parsed_and_saved(filename, sub_dir) == True:
+        filenames = [f for f in os.listdir(self.data_folder) if os.path.isfile(os.path.join(self.data_folder, f))]
+        for filename in filenames:
+            if self.__check_file_parsed_and_saved(filename) == True:
                 print('The file ', filename, 'has been parsed!')
                 continue
             print("Start parsing ", filename)
-            self.__parser_single_file(filename, sub_dir)
-
-
-        # filenames = [f for f in os.listdir(self.data_folder) if os.path.isfile(os.path.join(self.data_folder, f))]
-        # for filename in filenames:
-        #     if self.__check_file_parsed_and_saved(filename) == True:
-        #         print('The file ', filename, 'has been parsed!')
-        #         continue
-        #     print("Start parsing ", filename)
-        #     self.__parser_single_file(filename)
+            self.__parser_single_file(filename)
 
 
     def test(self):

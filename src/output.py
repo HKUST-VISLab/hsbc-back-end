@@ -111,4 +111,6 @@ def output_aqi_stations(aqi_station_path):
 
 
 if __name__ == "__main__":
-    output_aqi_stations('weather_stations.json')
+    # output_aqi_stations('weather_stations.json')
+    string = "123(1)"
+    print(string.split('(')[0])
