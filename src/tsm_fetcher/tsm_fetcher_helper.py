@@ -1,9 +1,13 @@
-
 from urllib.error import HTTPError, URLError
 import urllib
 import urllib.request
 from lxml import etree
 import time
+
+#  Modify: save the parsed data as local files
+#  logging the information
+#  Realtime updating 
+
 
 REQUESTPATH = 'http://resource.data.one.gov.hk/td/speedmap.xml'
 
@@ -21,7 +25,7 @@ class TSMFetcher:
     def __init__(self):
         pass
 
-    def fetch_TSM_data(self):
+    def fetch_TSM_data(self, default_path = REQUESTPATH):
 
         try:
             response = urllib.request.urlopen(REQUESTPATH)
@@ -103,7 +107,7 @@ class TSMFetcher:
 
     def time_cover(self, records1, records2):
         """
-        Decides if two records are overalpped, if overalpped return true and will not insert data
+        Decides if two records are overalpped, if overlapped return true and will not insert data
         :param records1: first records,
         :param records2: second records
         :return: True if overlapped(no insert), False if not overlapped(insert)
