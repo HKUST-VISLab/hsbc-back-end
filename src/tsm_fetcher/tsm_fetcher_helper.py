@@ -5,9 +5,11 @@ from lxml import etree
 import time
 
 #  Modify: save the parsed data as local files
-#  logging the information
-#  Realtime updating 
-
+#          log the schedual
+#          Realtime updating
+#  Recent record: latest: http://resource.data.one.gov.hk/td/speedmap.xml
+#  Historical record: https://api.data.gov.hk/v1/historical-archive/get-file?url=http%3A%2F%2Fresource.data.one.gov.hk%2Ftd%2Fspeedmap.xml&time=20170901-0049
+#
 
 REQUESTPATH = 'http://resource.data.one.gov.hk/td/speedmap.xml'
 
@@ -67,6 +69,7 @@ class TSMFetcher:
     def store_tsm_data(self, records):
         """
         Store the records into the database
+        Bad code
         :param records:
         :return:
         """
@@ -86,7 +89,7 @@ class TSMFetcher:
         client = MongoClient('127.0.0.1', 27017)
         db = client['traffic']
         collection = db['traffic_speed']
-        group = {"$group": {"_id": "$fetch_time", "records": {"$push":"$$ROOT"},  "count": {"$sum": 1}}}
+        group = {"$group": {"_id": "$fetch_time", "records": {"$push": "$$ROOT"},  "count": {"$sum": 1}}}
         sort = {"$sort": {"_id": -1}}
         limit = {"$limit": 1}
         agg_list = list(collection.aggregate([group, sort, limit]))
@@ -98,6 +101,11 @@ class TSMFetcher:
 
 
     def fetch_and_store(self, arg = None):
+        """
+        This function is used to fetch and store the Recent Record.
+        :param arg:
+        :return:
+        """
         records = self.fetch_TSM_data()
         old_records = self.fetch_recent_records()
         if self.time_cover(records, old_records):
@@ -123,7 +131,7 @@ class TSMFetcher:
         [s1, l1] = [time_list1[0], time_list1[-1]]
         [s2, l2] = [time_list2[0], time_list2[-1]]
         print([s1, l1], [s2, l2])
-        return False if s1>l2 or s2>l1 else True
+        return False if s1>l2 or s2> l1 else True
 
 
 if __name__ == '__main__':
