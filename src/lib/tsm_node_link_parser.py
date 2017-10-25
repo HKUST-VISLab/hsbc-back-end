@@ -42,7 +42,7 @@ def read_nodes_from_seg(seg_obj):
     second_node = {
         'id': seg_obj['End_Node'],
         'hk80': [seg_obj["End_Node_Northings"], seg_obj["End_Node_Eastings"]],
-        'position': [p2[1], p1[0]]
+        'position': [p2[1], p2[0]]
     }
 
     return [first_node, second_node]
@@ -83,6 +83,7 @@ def parser_link(link_path):
                 if n['id'] not in node_id_map:
                     node_id_map[id] = n
                     nodes.append(n)
+
             links.append({
                 'id': obj['Link_ID'],
                 'source': obj['Start_Node'],
