@@ -125,12 +125,14 @@ def find_nearby_stations(lat, lon, distance):
     return {'AQI': aqi_stations, 'weather': weather_stations}
     pass
 
+
+client = MongoClient('127.0.0.1', 27017)
+db = client['air_quality_model_hkust']
+weather_collection = db['weather_model_hkust']
+aqi_collection = db['air_quality_model_hkust']
+
 def find_weather_records(station_code, start_time, end_time):
-    # from pymongo import MongoClient
-    client = MongoClient('127.0.0.1', 27017)
-    db = client['air_quality_model_hkust']
-    weather_collection = db['weather_model_hkust']
-    number = 0
+
     result = weather_collection.find({
         'station_code': station_code,
         'time': {
@@ -142,9 +144,6 @@ def find_weather_records(station_code, start_time, end_time):
 
 def find_AQI_records(station_code, start_time, end_time):
     # from pymongo import MongoClient
-    client = MongoClient('127.0.0.1', 27017)
-    db = client['air_quality_model_hkust']
-    aqi_collection = db['air_quality_model_hkust']
     number = 0
     result = aqi_collection.find({
         'station_code': station_code,
@@ -202,8 +201,6 @@ def query_spatial_temporal_record(lat, lon, distance, start_time, end_time):
     for station in AQI_stations:
         AQI_records += find_AQI_records(station_code=station, start_time=start_time, end_time=end_time)
     AQI_aggregation = aggregate_records(AQI_records, data_type='aqi')
-
-
     return {"AQI": AQI_aggregation, "weather": weather_aggregation}
 
 def query_spatial_temporal_record_by_station_code(station_code, distance, start_time, end_time):

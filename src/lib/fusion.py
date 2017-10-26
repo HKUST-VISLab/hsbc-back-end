@@ -1,4 +1,4 @@
-from src.lib.library import *
+from library import *
 
 if __name__ == '__main__':
     generate_aggregation_collection()
