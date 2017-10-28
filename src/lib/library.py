@@ -274,6 +274,31 @@ def isfloat(x):
     else:
         return True
 
+
+def read_all_files():
+    import os
+    file_list = []
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # print('os.path.abspath(__file__): ', os.path.abspath(__file__))
+    # print('current_dir: ', current_dir)
+    data_folder = os.path.join(current_dir, '../../data/weather_station_param')
+
+    dirs = [f for f in os.listdir(data_folder) if os.path.isdir(os.path.join(data_folder, f))]
+    files = []
+    for dir in dirs:
+        dir_path = os.path.join(data_folder, dir)
+        filename_objs = [{'filename': f, 'sub_dir': dir} for f in os.listdir(dir_path) if
+                         os.path.isfile(os.path.join(dir_path, f))]
+        files += filename_objs
+
+    for file_obj in files:
+        filename = file_obj['filename']
+        sub_dir = file_obj['sub_dir']
+        file_list.append(data_folder + '/' + sub_dir + '/' + filename)
+
+    return file_list
+
+
 if __name__ == '__main__':
     # create_index('weather_station')
     # station_obj = find_nearby_stations(lat=22.2845, lon=114.2169, distance=5000)
