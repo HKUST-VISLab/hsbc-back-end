@@ -66,7 +66,14 @@ class TSMFetcher:
             # The time is record['CAPTURE_DATE'], to be revised
             r_time = time.strptime(record['CAPTURE_DATE'.lower()], "%Y-%m-%dT%H:%M:%S")
             record['CAPTURE_DATE'.lower()] = time.strftime("%Y-%m-%d %H:%M:%S", r_time)
+            # Store the seconds rom 1970
+            capture_date_1970 = float(time.mktime(r_time))
+            current_time_1970 = float(time.mktime(time.strptime(current_time, "%Y-%m-%d %H:%M:%S")))
+            record['capture_date_1970'] = capture_date_1970
+            record['fetch_time_1970'] = current_time_1970
+
             records.append(record)
+
         return records
 
     def fetch_tsm_save_link_file(self, start_date='20171001'):
@@ -164,6 +171,24 @@ class TSMFetcher:
             except IOError as err:
                 print('File error: ' + str(err))
 
+    def fetch_local_tsm_data(self):
+        """
+        Parse historical xml from local file.
+        """
+        xml_folder_path = os.path.join(self.current_path, '../../data/tsm-xml/')
+        os.chdir(xml_folder_path)
+        for root, dirs, files in os.walk(xml_folder_path):
+            for name in files:
+                xml_filename = os.path.join(root, name)
+                try:
+                    with open(xml_filename) as xml_in:
+                        self.page = xml_in.read()
+                        xml_record = self.fetch_tsm_once()
+                        print('Parsing: ' + name)
+                        self.store_tsm_data(xml_record)
+                except IOError as err:
+                    print('File error: ' + str(err))
+
     def store_tsm_data(self, records):
         """
         Store the records into the database
@@ -174,7 +199,7 @@ class TSMFetcher:
         from pymongo import MongoClient
         client = MongoClient('127.0.0.1', 27017)
         db = client['traffic']
-        collection = db['traffic_speed']
+        collection = db['traffic_speed_map']
         collection.insert_many(records)
         client.close()
 
@@ -233,8 +258,9 @@ class TSMFetcher:
 
 if __name__ == '__main__':
     tsm_fetcher = TSMFetcher()
-    tsm_fetcher.fetch_tsm_save_link_file('20161201')
+    #tsm_fetcher.fetch_tsm_save_link_file('20161201')
     #tsm_fetcher.fetch_tsm_save_xml_file()
+    #tsm_fetcher.fetch_local_tsm_data()
 
     #tsm_fetcher.fetch_and_store()
     # records = tsm_fetcher.fetch_recent_records()
