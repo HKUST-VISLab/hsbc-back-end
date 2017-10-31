@@ -1,6 +1,7 @@
 from urllib.error import HTTPError, URLError
 import urllib
 import urllib.request
+from pymongo import MongoClient
 from lxml import etree
 import time
 import json
@@ -19,6 +20,9 @@ REQUESTPATH = 'http://resource.data.one.gov.hk/td/speedmap.xml'
 tag_map = {
     "LINK_ID": 'id',
 }
+
+traffic_speed_collection = "traffic_speed_map"
+
 class TSMFetcher:
     """This is a class used to fetch data from the hk gov data.
     default url = http://resource.data.one.gov.hk/td/speedmap.xml
@@ -196,31 +200,45 @@ class TSMFetcher:
         :param records:
         :return:
         """
-        from pymongo import MongoClient
+
         client = MongoClient('127.0.0.1', 27017)
         db = client['traffic']
-        collection = db['traffic_speed_map']
+        collection = db[traffic_speed_collection]
         collection.insert_many(records)
         client.close()
 
-    def fetch_recent_records(self):
+    def find_latest_record(self):
+        client = MongoClient('127.0.0.1', 27017)
+        db = client['traffic']
+        collection = db[traffic_speed_collection]
+        records = list(collection.find().sort([('fetch_time', -1)]).limit(1))
+        if len(records) == 0:
+            print('No traffic speed data in current database')
+            return None
+        else:
+            return records[0]
+        client.close()
+
+
+    def find_recent_records(self):
         """
         Collection the recent records(according to fetch time,
         :return:
         """
-        from pymongo import MongoClient
+
         client = MongoClient('127.0.0.1', 27017)
         db = client['traffic']
-        collection = db['traffic_speed']
-        group = {"$group": {"_id": "$fetch_time", "records": {"$push": "$$ROOT"},  "count": {"$sum": 1}}}
-        sort = {"$sort": {"_id": -1}}
-        limit = {"$limit": 1}
-        agg_list = list(collection.aggregate([group, sort, limit]))
-        if len(agg_list) == 0:
-            print("No record found!")
-            return[]
-        client.close()
-        return agg_list[0]['records']
+        collection = db[traffic_speed_collection]
+        latest_record = self.find_latest_record()
+        if latest_record == None:
+            print('No traffic speed data in current database')
+            client.close()
+            return None
+        else:
+            records = collection.find({'fetch_time': latest_record['fetch_time']})
+        return list(records)
+
+
 
     def fetch_and_store(self, arg = None):
         """
@@ -229,7 +247,7 @@ class TSMFetcher:
         :return:
         """
         records = self.fetch_TSM_data()
-        old_records = self.fetch_recent_records()
+        old_records = self.find_recent_records()
         if self.time_cover(records, old_records):
             print('cover')
             return
@@ -262,7 +280,9 @@ if __name__ == '__main__':
     #tsm_fetcher.fetch_tsm_save_xml_file()
     #tsm_fetcher.fetch_local_tsm_data()
 
-    #tsm_fetcher.fetch_and_store()
+    print(tsm_fetcher.find_recent_records())
+    # tsm_fetcher.fetch_and_store()
+
     # records = tsm_fetcher.fetch_recent_records()
     # records2 = tsm_fetcher.fetch_TSM_data()
     # result = tsm_fetcher.time_cover(records, records2)
