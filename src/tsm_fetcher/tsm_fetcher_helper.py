@@ -248,9 +248,13 @@ class TSMFetcher:
         """
         records = self.fetch_TSM_data()
         old_records = self.find_recent_records()
-        if self.time_cover(records, old_records):
+
+        if old_records == None:
+            print('No record in database!')
+        elif self.time_cover(records, old_records):
             print('cover')
             return
+
         self.store_tsm_data(records)
 
     def time_cover(self, records1, records2):
@@ -280,8 +284,8 @@ if __name__ == '__main__':
     #tsm_fetcher.fetch_tsm_save_xml_file()
     #tsm_fetcher.fetch_local_tsm_data()
 
-    print(tsm_fetcher.find_recent_records())
-    # tsm_fetcher.fetch_and_store()
+    # print(tsm_fetcher.find_recent_records())
+    tsm_fetcher.fetch_and_store()
 
     # records = tsm_fetcher.fetch_recent_records()
     # records2 = tsm_fetcher.fetch_TSM_data()
