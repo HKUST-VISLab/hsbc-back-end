@@ -6,7 +6,6 @@ from lxml import etree
 import time
 import json
 import os
-import glob
 
 #  Modify: save the parsed data as local files
 #          log the schedual
@@ -17,7 +16,6 @@ import glob
 
 REQUEST_PATH = 'http://resource.data.one.gov.hk/td/speedmap.xml'
 TRAFFIC_SPEED_COLLECTION = "traffic_speed_map"
-SAVE_XML_FILE = False    # If save xml to local storage
 
 tag_map = {
     "LINK_ID": 'id',
@@ -37,9 +35,9 @@ class TSMFetcher:
     def __init__(self):
         pass
 
-    def fetch_TSM_data(self, default_path=REQUEST_PATH):
+    def fetch_TSM_data(self, path=REQUEST_PATH):
         try:
-            response = urllib.request.urlopen(REQUEST_PATH)
+            response = urllib.request.urlopen(path)
 
         except HTTPError as e:
             data = str(e.code)
@@ -88,7 +86,7 @@ class TSMFetcher:
         """
         Save the xml links to local files for everyday from start date
         :param start_date: start date in 'yyyymmdd' format
-        :return:
+        :return: list of new files' names
         """
 
         date_format = "%Y%m%d"
@@ -112,6 +110,8 @@ class TSMFetcher:
                          '&start=' + date_string + '&end=' + date_string
             api_list.append(api_string)
 
+        # List of new files
+        new_date_list = []
         # XML links of everyday
         for index, date_string in enumerate(date_list):
             xml_list = []
@@ -133,6 +133,8 @@ class TSMFetcher:
 
             # Save xml links file for everyday
             if not os.path.exists(date_string):
+                print('Saving xml links of ' + date_string + ' ...')
+                new_date_list.append(date_string)
                 try:
                     with open(date_string, 'w') as file_out:
                         separate = '\n'
@@ -140,10 +142,16 @@ class TSMFetcher:
                         file_out.write(file_string)
                 except IOError as err:
                     print('File error: ' + str(err))
+            else:
+                print('File: ' + date_string + ' already exists.')
 
-    def fetch_TSM_xml_from_link_file(self, save_xml=False):
+        return new_date_list
+
+    def fetch_TSM_xml_from_link_file(self, file_list, save_xml=False):
         """
-        Collect historical xml records from the links in local file and store in database.
+        Collect historical xml records from the links in local file. Default setting of saving the xml files is FALSE.
+        :param file_list: list of date files to be processed,
+        :param save_xml: if save each xml to local file
         :return:
         """
 
@@ -152,17 +160,19 @@ class TSMFetcher:
 
         # Read link files in link folder
         os.chdir(link_folder_path)
-        for date_file in glob.glob('*'):
+        for date_file in file_list:
             # date_file example: 20171001
             try:
                 with open(date_file) as file_in:
                     link_list = file_in.readlines()
                     for link in link_list:
-                        # link example: https://...&time=20171001-0000.xml
+                        # link example: https://...&time=20171001-0000
                         xml_filename = link[-14:-1] + ".xml"
                         if link == link_list[-1]:
                             # Without '\n'
                             xml_filename = link[-13:] + ".xml"
+                        # xml filename example: 20171001_0000.xml
+                        xml_filename.replace('-', '_')
                         try:
                             response = urllib.request.urlopen(link)
                         except HTTPError as e:
@@ -172,7 +182,7 @@ class TSMFetcher:
                             data = str(e.reason)
                             print('URLError = ' + data + '. Fetch TSM xml data error!')
                         else:
-                            print('Parsing: ' + xml_filename)
+                            print('Parsing: ' + xml_filename + ' and storing in database')
                             # Store in database
                             self.page = response.read()
                             xml_record = self.fetch_TSM_once()
@@ -184,6 +194,7 @@ class TSMFetcher:
                                 try:
                                     with open(xml_date_folder + xml_filename, 'wb') as xml_file_out:
                                         xml_file_out.write(self.page)
+                                        print('Saving: ' + xml_date_folder + xml_filename + ' successfully.')
                                 except IOError as err:
                                     print('File error: ' + str(err))
             except IOError as err:
@@ -212,8 +223,8 @@ class TSMFetcher:
             print('No traffic speed data in current database')
             return None
         else:
+            client.close()
             return records[0]
-        client.close()
 
     def find_recent_records(self):
         """
@@ -225,63 +236,62 @@ class TSMFetcher:
         db = client['traffic']
         collection = db[TRAFFIC_SPEED_COLLECTION]
         latest_record = self.find_latest_record()
-        if latest_record == None:
+        if latest_record is None:
             print('No traffic speed data in current database')
             client.close()
             return None
         else:
-            records = collection.find({'fetch_time': latest_record['fetch_time']})
-        return list(records)
+            return list(collection.find({'fetch_time': latest_record['fetch_time']}))
 
-    def fetch_and_store(self, arg=None):
+    def fetch_and_store(self):
         """
         This function is used to fetch and store the Recent Record.
-        :param arg:
         :return:
         """
         records = self.fetch_TSM_data()
         old_records = self.find_recent_records()
 
-        if old_records == None:
+        if old_records is None:
             print('No record in database!')
         elif self.time_cover(records, old_records):
-            print('cover')
+            print('Covered.')
             return
 
         self.store_TSM_data(records)
 
-
-    def time_cover(self, records1, records2):
+    def time_cover(self, old_records, new_records):
         """
-        Decides if two records are overalpped, if overlapped return true and will not insert data
-        :param records1: first records,
-        :param records2: second records
+        Decides if two records are overlapped, if overlapped return true and will not insert data
+        :param old_records: existing records,
+        :param new_records: new coming records
         :return: True if overlapped(no insert), False if not overlapped(insert)
         """
 
-        time_list1 = list(set([time.mktime(time.strptime(r['capture_date'], "%Y-%m-%d %H:%M:%S")) for r in records1]))
-        time_list1 = sorted(time_list1, key=lambda x: x, reverse=False)
-        time_list2 = list(set([time.mktime(time.strptime(r['capture_date'], "%Y-%m-%d %H:%M:%S")) for r in records2]))
-        time_list2 = sorted(time_list2, key=lambda x: x, reverse=False)
-
-        if len(time_list2) == 0 or len(time_list2) == 0:
+        old_time_list = list(set([r['capture_date_1970'] for r in old_records]))
+        old_time_list = sorted(old_time_list, key=lambda x: x, reverse=False)
+        new_time_list = list(set([r['capture_date_1970'] for r in new_records]))
+        new_time_list = sorted(new_time_list, key=lambda x: x, reverse=False)
+        if len(old_time_list) == 0 or len(new_time_list) == 0:
             return False
-        [s1, l1] = [time_list1[0], time_list1[-1]]
-        [s2, l2] = [time_list2[0], time_list2[-1]]
-        print([s1, l1], [s2, l2])
-        return False if s1 > l2 or s2 > l1 else True
+
+        [old_time_earliest, old_time_latest] = [old_time_list[0], old_time_list[-1]]
+        [new_time_earliest, new_time_latest] = [new_time_list[0], new_time_list[-1]]
+        print([old_time_earliest, old_time_latest], [new_time_earliest, new_time_latest])
+        if old_time_earliest > new_time_latest or new_time_earliest > old_time_latest:
+            return False
+        else:
+            return True
 
 
 if __name__ == '__main__':
     tsm_fetcher = TSMFetcher()
 
-
-    tsm_fetcher.fetch_TSM_save_links_file('20161201')
-    tsm_fetcher.fetch_TSM_xml_from_link_file(True)
+    # Collect TSM data from 2016-12-01
+    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20161201')
+    tsm_fetcher.fetch_TSM_xml_from_link_file(new_file_list, False)
 
     # print(tsm_fetcher.find_recent_records())
     # tsm_fetcher.fetch_and_store()
-
 
     # records = tsm_fetcher.find_recent_records()
     # records2 = tsm_fetcher.fetch_TSM_data()
