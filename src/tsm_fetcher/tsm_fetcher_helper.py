@@ -99,7 +99,7 @@ class TSMFetcher:
         date_list = [time.strftime(date_format, time.localtime(i)) for i in range(start, end, 3600 * 24)]
 
         # Build folder for data storage
-        link_folder_path = os.path.join(self.current_path, '../../data/tsm-link/')
+        link_folder_path = os.path.join(self.current_path, '../../data/tsm_link/')
         if not os.path.exists(link_folder_path):
             os.makedirs(link_folder_path)
         os.chdir(link_folder_path)
@@ -147,8 +147,8 @@ class TSMFetcher:
         :return:
         """
 
-        xml_folder_path = os.path.join(self.current_path, '../../data/tsm-xml/')
-        link_folder_path = os.path.join(self.current_path, '../../data/tsm-link/')
+        xml_folder_path = os.path.join(self.current_path, '../../data/tsm_xml/')
+        link_folder_path = os.path.join(self.current_path, '../../data/tsm_link/')
 
         # Read link files in link folder
         os.chdir(link_folder_path)
@@ -276,8 +276,8 @@ if __name__ == '__main__':
     tsm_fetcher = TSMFetcher()
 
 
-    #tsm_fetcher.fetch_TSM_save_links_file('20161201')
-    tsm_fetcher.fetch_TSM_xml_from_link_file(SAVE_XML_FILE)
+    tsm_fetcher.fetch_TSM_save_links_file('20161201')
+    tsm_fetcher.fetch_TSM_xml_from_link_file(True)
 
     # print(tsm_fetcher.find_recent_records())
     # tsm_fetcher.fetch_and_store()
