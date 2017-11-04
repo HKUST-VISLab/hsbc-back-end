@@ -298,6 +298,8 @@ def read_all_files():
 
     return file_list
 
+def test_name():
+    print("tt", __name__)
 
 if __name__ == '__main__':
     # create_index('weather_station')
