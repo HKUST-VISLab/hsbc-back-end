@@ -66,19 +66,25 @@ class TSMFetcher:
             record = {}
             for seg in segs:
                 record.update(seg)
-            record['fetch_time'] = current_time
 
-            # The time is record['CAPTURE_DATE'], to be revised
-            r_time = time.strptime(record['CAPTURE_DATE'.lower()], "%Y-%m-%dT%H:%M:%S")
-            record['CAPTURE_DATE'.lower()] = time.strftime("%Y-%m-%d %H:%M:%S", r_time)
+            # Check if a valid record
+            if 'link_id' and 'region' and 'road_type' and 'road_saturation_level' \
+                    and 'traffic_speed' and 'capture_date' in record:
+                record['fetch_time'] = current_time
 
-            # Store the seconds rom 1970
-            capture_date_1970 = float(time.mktime(r_time))
-            current_time_1970 = float(time.mktime(time.strptime(current_time, "%Y-%m-%d %H:%M:%S")))
-            record['capture_date_1970'] = capture_date_1970
-            record['fetch_time_1970'] = current_time_1970
+                # The time is record['CAPTURE_DATE'], to be revised
+                r_time = time.strptime(record['CAPTURE_DATE'.lower()], "%Y-%m-%dT%H:%M:%S")
+                record['CAPTURE_DATE'.lower()] = time.strftime("%Y-%m-%d %H:%M:%S", r_time)
 
-            records.append(record)
+                # Store the seconds rom 1970
+                capture_date_1970 = float(time.mktime(r_time))
+                current_time_1970 = float(time.mktime(time.strptime(current_time, "%Y-%m-%d %H:%M:%S")))
+                record['capture_date_1970'] = capture_date_1970
+                record['fetch_time_1970'] = current_time_1970
+
+                records.append(record)
+            else:
+                print("invalid record")
 
         return records
 
