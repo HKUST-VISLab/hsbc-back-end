@@ -3,6 +3,7 @@ import urllib
 import urllib.request
 from pymongo import MongoClient
 from lxml import etree
+from lxml.etree import XMLSyntaxError
 import time
 import json
 import os
@@ -12,7 +13,6 @@ import os
 #          Realtime updating
 #  Recent record: latest: http://resource.data.one.gov.hk/td/speedmap.xml
 #  Historical record: https://api.data.gov.hk/v1/historical-archive/get-file?url=http%3A%2F%2Fresource.data.one.gov.hk%2Ftd%2Fspeedmap.xml&time=20170901-0049
-#
 
 REQUEST_PATH = 'http://resource.data.one.gov.hk/td/speedmap.xml'
 TRAFFIC_SPEED_COLLECTION = "traffic_speed_map"
@@ -38,11 +38,9 @@ class TSMFetcher:
     def fetch_TSM_data(self, path=REQUEST_PATH):
         try:
             response = urllib.request.urlopen(path)
-
         except HTTPError as e:
             data = str(e.code)
             print('HTTPError = ' + data + '. Air Quality AQExtractor!')
-
         except URLError as e:
             data = str(e.reason)
             print('URLError = ' + data + '. Air Quality AQExtractor!')
@@ -52,41 +50,45 @@ class TSMFetcher:
 
     def fetch_TSM_once(self):
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+        parser = etree.XMLPullParser(events=('start',))
+        records = []
 
         def parse_tag(raw_tag):
             return raw_tag.split('}')[1]
 
-        parser = etree.XMLPullParser(events=('start',))
-        parser.feed(self.page)
-        records = []
-        for action, element in parser.read_events():
-            if parse_tag(element.tag) != self.entity_tag:
-                continue
-            segs = [{parse_tag(t.tag.lower()): t.text} for t in element]
-            record = {}
-            for seg in segs:
-                record.update(seg)
+        try:
+            parser.feed(self.page)
+        except XMLSyntaxError as err:
+            print('XMLSyntaxError: ' + str(err))
+        else:
+            for action, element in parser.read_events():
+                if parse_tag(element.tag) != self.entity_tag:
+                    continue
+                segs = [{parse_tag(t.tag.lower()): t.text} for t in element]
+                record = {}
+                for seg in segs:
+                    record.update(seg)
 
-            # Check if a valid record
-            if 'link_id' and 'region' and 'road_type' and 'road_saturation_level' \
-                    and 'traffic_speed' and 'capture_date' in record:
-                record['fetch_time'] = current_time
+                # Check if a valid record
+                if 'link_id' and 'region' and 'road_type' and 'road_saturation_level' \
+                        and 'traffic_speed' and 'capture_date' in record:
+                    record['fetch_time'] = current_time
 
-                # The time is record['CAPTURE_DATE'], to be revised
-                r_time = time.strptime(record['CAPTURE_DATE'.lower()], "%Y-%m-%dT%H:%M:%S")
-                record['CAPTURE_DATE'.lower()] = time.strftime("%Y-%m-%d %H:%M:%S", r_time)
+                    # The time is record['CAPTURE_DATE'], to be revised
+                    r_time = time.strptime(record['CAPTURE_DATE'.lower()], "%Y-%m-%dT%H:%M:%S")
+                    record['CAPTURE_DATE'.lower()] = time.strftime("%Y-%m-%d %H:%M:%S", r_time)
 
-                # Store the seconds rom 1970
-                capture_date_1970 = float(time.mktime(r_time))
-                current_time_1970 = float(time.mktime(time.strptime(current_time, "%Y-%m-%d %H:%M:%S")))
-                record['capture_date_1970'] = capture_date_1970
-                record['fetch_time_1970'] = current_time_1970
+                    # Store the seconds rom 1970
+                    capture_date_1970 = float(time.mktime(r_time))
+                    current_time_1970 = float(time.mktime(time.strptime(current_time, "%Y-%m-%d %H:%M:%S")))
+                    record['capture_date_1970'] = capture_date_1970
+                    record['fetch_time_1970'] = current_time_1970
 
-                records.append(record)
-            else:
-                print("invalid record")
-
-        return records
+                    records.append(record)
+                else:
+                    print("invalid record")
+        finally:
+                return records
 
     def fetch_TSM_save_links_file(self, start_date='20171001'):
         """
@@ -168,41 +170,68 @@ class TSMFetcher:
         os.chdir(link_folder_path)
         for date_file in file_list:
             # date_file example: 20171001
+            current_date_time = time.strptime(date_file, "%Y%m%d")
+            seconds_of_current_date = time.mktime(current_date_time)
+            #print(seconds_of_current_date)
+            date_format = "%Y%m%d-%H%M"
             try:
                 with open(date_file) as file_in:
                     link_list = file_in.readlines()
-                    for link in link_list:
-                        # link example: https://...&time=20171001-0000
-                        xml_filename = link[-14:-1] + ".xml"
-                        if link == link_list[-1]:
-                            # Without '\n'
-                            xml_filename = link[-13:] + ".xml"
-                        # xml filename example: 20171001_0000.xml
-                        xml_filename.replace('-', '_')
-                        try:
-                            response = urllib.request.urlopen(link)
-                        except HTTPError as e:
-                            data = str(e.code)
-                            print('HTTPError = ' + data + '. Fetch TSM xml data error!')
-                        except URLError as e:
-                            data = str(e.reason)
-                            print('URLError = ' + data + '. Fetch TSM xml data error!')
-                        else:
-                            print('Parsing: ' + xml_filename + ' and storing in database')
-                            # Store in database
-                            self.page = response.read()
-                            xml_record = self.fetch_TSM_once()
-                            self.store_TSM_data(xml_record)
-                            if save_xml:
-                                xml_date_folder = os.path.join(xml_folder_path, date_file + '/')
-                                if not os.path.exists(xml_date_folder):
-                                    os.makedirs(xml_date_folder)
-                                try:
-                                    with open(xml_date_folder + xml_filename, 'wb') as xml_file_out:
-                                        xml_file_out.write(self.page)
-                                        print('Saving: ' + xml_date_folder + xml_filename + ' successfully.')
-                                except IOError as err:
-                                    print('File error: ' + str(err))
+                    search_start_index = 0
+                    for i in range(0, 49):
+                        # Search data for every 30 minutes
+                        seconds_of_each_interval = seconds_of_current_date + i * 30 * 60
+                        if i == 48:
+                            # 23:59
+                            seconds_of_each_interval = seconds_of_current_date + (23 * 60 + 59) * 60
+                        # print(time.strftime(date_format, time.localtime(seconds_of_each_interval + i * 30 * 60)))
+                        smallest_gap = 30 * 60
+                        closest_link = ""
+                        closest_date_time_string = ""
+                        for index, link in enumerate(link_list):
+                            if index >= search_start_index:
+                                date_time_string = link[-14:-1]
+                                if link == link_list[-1]:
+                                    # Without '\n'
+                                    date_time_string = link[-13:]
+
+                                seconds_of_link = time.mktime(time.strptime(date_time_string, date_format))
+                                gap = abs(seconds_of_link - seconds_of_each_interval)
+                                if gap < smallest_gap:
+                                    smallest_gap = gap
+                                    search_start_index = index
+                                    closest_link = link
+                                    closest_date_time_string = date_time_string
+
+                        if len(closest_link):
+                            # xml filename example: 20171001_0000.xml
+                            xml_filename = closest_date_time_string.replace('-', '_') + ".xml"
+                            try:
+                                response = urllib.request.urlopen(closest_link)
+                            except HTTPError as e:
+                                data = str(e.code)
+                                print('HTTPError = ' + data + '. Fetch TSM xml data error!')
+                            except URLError as e:
+                                data = str(e.reason)
+                                print('URLError = ' + data + '. Fetch TSM xml data error!')
+                            else:
+                                print('Parsing: ' + xml_filename + ' and storing in database')
+                                # Store in database
+                                self.page = response.read()
+                                xml_record = self.fetch_TSM_once()
+                                if len(xml_record):
+                                    self.store_TSM_data(xml_record)
+                                    if save_xml:
+                                        xml_date_folder = os.path.join(xml_folder_path, date_file + '/')
+                                        if not os.path.exists(xml_date_folder):
+                                            os.makedirs(xml_date_folder)
+                                        try:
+                                            with open(xml_date_folder + xml_filename, 'wb') as xml_file_out:
+                                                xml_file_out.write(self.page)
+                                                print('Saving: ' + xml_date_folder + xml_filename + ' successfully.')
+                                        except IOError as err:
+                                            print('File error: ' + str(err))
+
             except IOError as err:
                 print('File error: ' + str(err))
 
@@ -291,12 +320,21 @@ class TSMFetcher:
 
 if __name__ == '__main__':
     tsm_fetcher = TSMFetcher()
-
-    # Collect TSM data from 2016-12-01
-    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20161201')
-    tsm_fetcher.fetch_TSM_xml_from_link_file(new_file_list, True)
-
     # print(tsm_fetcher.find_recent_records())
+
+    # Collect new TSM data from 2016-12-01
+    # new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20161201')
+    # tsm_fetcher.fetch_TSM_xml_from_link_file(new_file_list, True)
+
+    # Traverse existing files
+    exist_file_list = []
+    link_folder_path = os.path.join(tsm_fetcher.current_path, '../../data/tsm_link/')
+    if os.path.isdir(link_folder_path):
+        for (root, dirs, files) in os.walk(link_folder_path):
+            exist_file_list = files
+
+    tsm_fetcher.fetch_TSM_xml_from_link_file(exist_file_list, True)
+
     # tsm_fetcher.fetch_and_store()
 
     # records = tsm_fetcher.find_recent_records()
