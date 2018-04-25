@@ -46,9 +46,9 @@ class TSMFetcher:
             print('URLError = ' + data + '. Air Quality AQExtractor!')
         else:
             self.page = response.read()
-            return self.fetch_TSM_once()
+            return self.parse_self_xml()
 
-    def fetch_TSM_once(self):
+    def parse_self_xml(self):
         current_time = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
         parser = etree.XMLPullParser(events=('start',))
         records = []
@@ -90,10 +90,11 @@ class TSMFetcher:
         finally:
                 return records
 
-    def fetch_TSM_save_links_file(self, start_date='20171001'):
+    def fetch_TSM_save_links_file(self, start_date='20171001', relative_path='../../data/tsm_link/'):
         """
         Save the xml links to local files for everyday from start date
         :param start_date: start date in 'yyyymmdd' format
+        :param relative_path: relative data path of the current file
         :return: list of new files' names
         """
 
@@ -105,7 +106,7 @@ class TSMFetcher:
         date_list = [time.strftime(date_format, time.localtime(i)) for i in range(start, end, 3600 * 24)]
 
         # Build folder for data storage
-        link_folder_path = os.path.join(self.current_path, '../../data/tsm_link/')
+        link_folder_path = os.path.join(self.current_path, relative_path)
         if not os.path.exists(link_folder_path):
             os.makedirs(link_folder_path)
         os.chdir(link_folder_path)
@@ -155,11 +156,74 @@ class TSMFetcher:
 
         return new_date_list
 
-    def fetch_TSM_xml_from_link_file(self, file_list, save_xml=False):
+    def fetch_all_TSM_xml_from_link_file(self, file_list, save_xml=False, store_database=False):
         """
-        Collect historical xml records from the links in local file. Default setting of saving the xml files is FALSE.
+        Collect ALL historical xml records from the links in local file.
+        Default setting of saving the xml files is FALSE.
+        Default setting of storing into the database is FALSE.
         :param file_list: list of date files to be processed,
         :param save_xml: if save each xml to local file
+        :param store_database: if parse and store in database
+        :return:
+        """
+
+        # current_path: ~/workspace/hsbc-back-end/src/tsm_fetcher/tsm_fetcher_helper.py
+        xml_folder_path = os.path.join(self.current_path, '../../../../data/full_tsm_xml/')
+        link_folder_path = os.path.join(self.current_path, '../../../../data/full_tsm_link/')
+
+        # Read link files in link folder
+        os.chdir(link_folder_path)
+        for date_file in file_list:
+            # date_file example: 20171001
+            try:
+                with open(date_file) as file_in:
+                    link_list = file_in.readlines()
+                    for link in link_list:
+                        date_time_string = link[-14:-1]
+                        if link == link_list[-1]:
+                            # Without '\n'
+                            date_time_string = link[-13:]
+
+                        # xml filename example: 20171001_0000.xml
+                        xml_filename = date_time_string.replace('-', '_') + ".xml"
+                        try:
+                            response = urllib.request.urlopen(link)
+                        except HTTPError as e:
+                            data = str(e.code)
+                            print('HTTPError = ' + data + '. Fetch TSM xml data error!')
+                        except URLError as e:
+                            data = str(e.reason)
+                            print('URLError = ' + data + '. Fetch TSM xml data error!')
+                        else:
+                            self.page = response.read()
+                            if save_xml:
+                                xml_date_folder = os.path.join(xml_folder_path, date_file + '/')
+                                if not os.path.exists(xml_date_folder):
+                                    os.makedirs(xml_date_folder)
+                                try:
+                                    with open(xml_date_folder + xml_filename, 'wb') as xml_file_out:
+                                        xml_file_out.write(self.page)
+                                        print('Saving: ' + xml_date_folder + xml_filename + ' successfully.')
+                                except IOError as err:
+                                    print('File error: ' + str(err))
+                            if store_database:
+                                # Store in database
+                                xml_record = self.parse_self_xml()
+                                if len(xml_record):
+                                    # valid record
+                                    self.store_TSM_data(xml_record)
+                                    print('Parsing: ' + xml_filename + ' and storing in database successfully')
+            except IOError as err:
+                print('File error: ' + str(err))
+
+    def fetch_TSM_xml_from_link_file(self, file_list, save_xml=False, store_database=False):
+        """
+        Collect historical xml records with 30-min interval from the links in local file.
+        Default setting of saving the xml files is FALSE.
+        Default setting of storing into the database is FALSE.
+        :param file_list: list of date files to be processed,
+        :param save_xml: if save each xml to local file
+        :param store_database: if parse and store in database
         :return:
         """
 
@@ -172,7 +236,7 @@ class TSMFetcher:
             # date_file example: 20171001
             current_date_time = time.strptime(date_file, "%Y%m%d")
             seconds_of_current_date = time.mktime(current_date_time)
-            #print(seconds_of_current_date)
+            # print(seconds_of_current_date)
             date_format = "%Y%m%d-%H%M"
             try:
                 with open(date_file) as file_in:
@@ -215,23 +279,24 @@ class TSMFetcher:
                                 data = str(e.reason)
                                 print('URLError = ' + data + '. Fetch TSM xml data error!')
                             else:
-                                print('Parsing: ' + xml_filename + ' and storing in database')
-                                # Store in database
                                 self.page = response.read()
-                                xml_record = self.fetch_TSM_once()
-                                if len(xml_record):
-                                    self.store_TSM_data(xml_record)
-                                    if save_xml:
-                                        xml_date_folder = os.path.join(xml_folder_path, date_file + '/')
-                                        if not os.path.exists(xml_date_folder):
-                                            os.makedirs(xml_date_folder)
-                                        try:
-                                            with open(xml_date_folder + xml_filename, 'wb') as xml_file_out:
-                                                xml_file_out.write(self.page)
-                                                print('Saving: ' + xml_date_folder + xml_filename + ' successfully.')
-                                        except IOError as err:
-                                            print('File error: ' + str(err))
-
+                                if save_xml:
+                                    xml_date_folder = os.path.join(xml_folder_path, date_file + '/')
+                                    if not os.path.exists(xml_date_folder):
+                                        os.makedirs(xml_date_folder)
+                                    try:
+                                        with open(xml_date_folder + xml_filename, 'wb') as xml_file_out:
+                                            xml_file_out.write(self.page)
+                                            print('Saving: ' + xml_date_folder + xml_filename + ' successfully.')
+                                    except IOError as err:
+                                        print('File error: ' + str(err))
+                                if store_database:
+                                    # Store in database
+                                    xml_record = self.parse_self_xml()
+                                    if len(xml_record):
+                                        # valid record
+                                        self.store_TSM_data(xml_record)
+                                        print('Parsing: ' + xml_filename + ' and storing in database successfully')
             except IOError as err:
                 print('File error: ' + str(err))
 
@@ -322,18 +387,19 @@ if __name__ == '__main__':
     tsm_fetcher = TSMFetcher()
     # print(tsm_fetcher.find_recent_records())
 
-    # Collect new TSM data from 2016-12-01
-    # new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20161201')
-    # tsm_fetcher.fetch_TSM_xml_from_link_file(new_file_list, True)
+    # Store all new TSM data from 2016-12-01
+    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20161201', '../../../../data/full_tsm_link/')
+    tsm_fetcher.fetch_all_TSM_xml_from_link_file(new_file_list, True, False)
 
+    """
     # Traverse existing files
     exist_file_list = []
     link_folder_path = os.path.join(tsm_fetcher.current_path, '../../data/tsm_link/')
     if os.path.isdir(link_folder_path):
         for (root, dirs, files) in os.walk(link_folder_path):
             exist_file_list = files
-
-    tsm_fetcher.fetch_TSM_xml_from_link_file(exist_file_list, True)
+    tsm_fetcher.fetch_TSM_xml_from_link_file(exist_file_list, True, True)
+    """
 
     # tsm_fetcher.fetch_and_store()
 
