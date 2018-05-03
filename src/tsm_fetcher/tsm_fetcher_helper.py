@@ -388,7 +388,7 @@ if __name__ == '__main__':
     # print(tsm_fetcher.find_recent_records())
 
     # Store all new TSM data from 2016-12-01
-    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20161201', '../../../../data/full_tsm_link/')
+    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20180501', '../../../../data/full_tsm_link/')
     tsm_fetcher.fetch_all_TSM_xml_from_link_file(new_file_list, True, False)
 
     """
