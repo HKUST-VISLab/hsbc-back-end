@@ -1,14 +1,16 @@
 """
-A class for querying OSM data from PostGIS database
+A class for querying OSM data from PostGIS and MongoDB
 """
 import psycopg2
 from psycopg2 import extras
+from pymongo import MongoClient
 
 DATABASE = "gis"
 HOST = "127.0.0.1"
 PORT = "5432"
 USER = "postgres"
 PASSWORD = "manage"
+
 
 class OSMQuery:
     def __init__(self):
@@ -37,33 +39,32 @@ class OSMQuery:
             print("dbname=" + self.database + ", host=" + self.host + ", port=" + self.port
                   + " , user=" + self.user + ", password=" + self.password)
             print("OperationalError: " + e)
-            return None
+        else:
+            # Create a cursor object using dict output format
+            cursor = postgresql_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # Create a cursor object using dict output format
-        cursor = postgresql_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            sql_query = """
+            SELECT osm_id, highway, name, ref, 
+            ST_X(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom)), 
+            ST_Y(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom)), 
+            ST_Distance_Sphere(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom), point.geom) 
+            FROM planet_osm_roads r, (SELECT ST_SetSRID(ST_MakePoint(%s, %s), 4326) as geom) point 
+            WHERE osm_id=%s;
+            """
+            if print_sql:
+                print(sql_query)
 
-        sql_query = """
-        SELECT osm_id, highway, name, ref, 
-        ST_X(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom)), 
-        ST_Y(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom)), 
-        ST_Distance_Sphere(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom), point.geom) 
-        FROM planet_osm_roads r, (SELECT ST_SetSRID(ST_MakePoint(%s, %s), 4326) as geom) point 
-        WHERE osm_id=%s;
-        """
-        if print_sql:
-            print(sql_query)
+            try:
+                cursor.execute(sql_query, (str(point_longitude), str(point_latitude), str(way_id)))
+            except psycopg2.DatabaseError as e:
+                print("DatabaseError: " + e)
 
-        try:
-            cursor.execute(sql_query, (str(point_longitude), str(point_latitude), str(way_id)))
-        except psycopg2.DatabaseError as e:
-            print("DatabaseError: " + e)
+            result = cursor.fetchone()
+            cursor.close()
+            postgresql_connection.close()
 
-        result = cursor.fetchone()
-        cursor.close()
-        postgresql_connection.close()
-
-        # Return the distance
-        return result['st_distance_sphere']
+            # Return the distance
+            return result['st_distance_sphere']
 
     def query_road_list_from_point(self, point_longitude, point_latitude, distance, print_sql=False):
         """
@@ -84,36 +85,57 @@ class OSMQuery:
             print("dbname=" + self.database + ", host=" + self.host + ", port=" + self.port
                   + " , user=" + self.user + ", password=" + self.password)
             print("OperationalError: " + e)
-            return None
+        else:
+            # Create a cursor object using dict output format
+            cursor = postgresql_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # Create a cursor object using dict output format
-        cursor = postgresql_connection.cursor(cursor_factory=psycopg2.extras.DictCursor)
+            sql_query = """
+            SELECT * FROM
+            (SELECT osm_id, highway, name, ref,
+            ST_X(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom)),
+            ST_Y(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom)),
+            ST_Distance_Sphere(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom), point.geom)
+            FROM planet_osm_roads r,
+            (SELECT ST_SetSRID(ST_MakePoint(%s, %s),4326) as geom) point
+            ORDER BY 7 ASC) AS A
+            WHERE A.st_distance_sphere < %s AND A.highway IS NOT NULL;
+            """
+            if print_sql:
+                print(sql_query)
 
-        sql_query = """
-        SELECT * FROM
-        (SELECT osm_id, highway, name, ref,
-        ST_X(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom)),
-        ST_Y(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom)),
-        ST_Distance_Sphere(ST_ClosestPoint(ST_Transform(r.way,4326), point.geom), point.geom)
-        FROM planet_osm_roads r,
-        (SELECT ST_SetSRID(ST_MakePoint(%s, %s),4326) as geom) point
-        ORDER BY 7 ASC) AS A
-        WHERE A.st_distance_sphere < %s AND A.highway IS NOT NULL;
-        """
-        if print_sql:
-            print(sql_query)
+            try:
+                cursor.execute(sql_query, (str(point_longitude), str(point_latitude), str(distance)))
+            except psycopg2.DatabaseError as e:
+                print("DatabaseError: " + e)
 
-        try:
-            cursor.execute(sql_query, (str(point_longitude), str(point_latitude), str(distance)))
-        except psycopg2.DatabaseError as e:
-            print("DatabaseError: " + e)
+            result = cursor.fetchall()
+            cursor.close()
+            postgresql_connection.close()
 
-        result = cursor.fetchall()
-        cursor.close()
-        postgresql_connection.close()
+            # Return the distance
+            return result
 
-        # Return the distance
-        return result
+
+def query_road_link_from_mongodb(link_id):
+    """
+    Query a road with link id stored in MongoDB
+    :param
+    link_id: string of two indexes (example: "3006-30069")
+    :return: records of the road from all time
+    """
+
+    client = MongoClient("127.0.0.1", 27017)
+    db = client["traffic"]
+    tsm_collection = db["traffic_speed_map"]
+    records = list(tsm_collection.find({"link_id": link_id}))
+    # records = list(tsm_collection.find().sort([('fetch_time', -1)]).limit(1))
+    client.close()
+
+    if len(records) == 0:
+        print("No traffic speed data of this road in current database")
+        return None
+    else:
+        return records
 
 
 if __name__ == '__main__':
@@ -122,6 +144,6 @@ if __name__ == '__main__':
     distance = osm_query.query_point_distance_from_road(114.26, 22.33, 157424143)
     print("Nearest distance between (114.26, 22.33) and the road (way-id 157424143): " + str(distance) + "\n")
 
-    road_list =osm_query.query_road_list_from_point(114.26, 22.33, 500)
+    road_list = osm_query.query_road_list_from_point(114.26, 22.33, 500)
     for road in road_list:
         print(road)
