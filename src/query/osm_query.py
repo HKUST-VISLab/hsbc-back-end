@@ -4,6 +4,9 @@ A class for querying OSM data from PostGIS and MongoDB
 import psycopg2
 from psycopg2 import extras
 from pymongo import MongoClient
+import os
+import json
+
 
 DATABASE = "gis"
 HOST = "127.0.0.1"
@@ -181,26 +184,55 @@ def update_latest_road_link_info_from_mongodb(link_list):
     """
     Query and update the latest information for the link list
     :param link_list: a list of links queried from MongoDB
-    :return: an updated link list
+    :return: a list of updated link dicts
     """
 
     client = MongoClient("127.0.0.1", 27017)
     db = client["traffic"]
     tsm_collection = db["traffic_speed_map"]
 
+    link_dict_list = []
     for link in link_list:
+        link_dict = {}
         link_id = link['parent_id']
         # Transfer the cursor to a list (TODO: May update according to the requirements)
         latest_link_record = list(tsm_collection.find({"link_id": link_id}).sort([('capture_date_1970', -1)]).limit(1))
         # print(latest_link_record[0])
         link_saturation_level = latest_link_record[0]['road_saturation_level']
         link_traffic_speed = int(latest_link_record[0]['traffic_speed'])
-        link.append(link_saturation_level)
-        link.append(link_traffic_speed)
 
+        link_dict['link_id'] = link['link_id']
+        link_dict['parent_id'] = link_id
+        link_dict['length'] = link['st_length']
+        link_dict['distance'] = link['st_distance_sphere']
+        link_dict['saturation_level'] = link_saturation_level
+        link_dict['traffic_speed'] = link_traffic_speed
+        print(link_dict)
+        link_dict_list.append(link_dict)
     client.close()
 
-    return link_list
+    return link_dict_list
+
+
+def save_link_info_json(link_dict_list):
+    """
+    Create a folder and output a JSON file of nearby traffic information
+    :param link_dict_list: a list of query links
+    :return:
+    """
+
+    current_path = os.path.dirname(os.path.abspath(__file__))
+    relative_path = '../../data/json/'
+    json_folder_path = os.path.join(current_path, relative_path)
+    if not os.path.exists(json_folder_path):
+        os.makedirs(json_folder_path)
+    os.chdir(json_folder_path)
+
+    try:
+        with open('area-traffic-info.json', 'w') as json_file:
+            json_file.write(json.dumps(link_dict_list))
+    except IOError as error:
+        print('File error: ' + str(error))
 
 
 if __name__ == '__main__':
@@ -213,4 +245,5 @@ if __name__ == '__main__':
     for link in link_list:
         print(link)
 
-    link_list = update_latest_road_link_info_from_mongodb(link_list)
+    link_dict_list = update_latest_road_link_info_from_mongodb(link_list)
+    save_link_info_json(link_dict_list)
