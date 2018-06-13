@@ -1,310 +1,199 @@
-"""
-Helpers that fetch and pre-process weather data
-Weather data and forecast data do not follow the same station configuration
-"""
-
-import urllib
-from urllib import request, error, parse
-from urllib.error import HTTPError, URLError
-import logging
-from src import DB
-from src.DB import document_db
-from src.DB import mongodb
-from src import utils
-from src.utils import safe_open_url
-from src.config import Config
+from time_processing import TimeStrUnmatchedError, format_time
 import time
-import os.path
 
-# Configurations
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATION_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/station_config.json')
-FULL_STATION_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/full_station_config.json')
-FORECAST_STATION_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/forecast_station_config.json')
-DB_CONFIG_DIR = os.path.join(CURRENT_DIR, '../config/db_config.json')
-WEATHER_CODE_DIR = os.path.join(CURRENT_DIR, '../config/weather_code.json')
+from time_processing import TimeStrUnmatchedError, format_time
+import time
+import urllib
+from urllib.error import HTTPError, URLError
+import urllib.request
+import re
+from pymongo import MongoClient
 
-# Constants
-ERROR_FETCH = 1
-SUCCESS = 0
+"""
+Raised Error:
+HTTPError
+URLError
+TimeStrUnmatchedError
+FeatureTypeError
+"""
 
-class WeatherFetcher:
 
-    # logger config in this module
-    _logger = utils.Logger(__name__)
-    # _db_config = utils.parse_json_file(DB_CONFIG_DIR)
-    # _station_config = utils.parse_json_file(STATION_CONFIG_DIR)
-    # _full_station_config = utils.parse_json_file(FULL_STATION_CONFIG_DIR)
-    # _forecast_config = utils.parse_json_file(FORECAST_STATION_CONFIG_DIR)
-    _current_weather_handler = Config.get_collection_handler('current')
-    _forecast_weather_handler = Config.get_collection_handler('forecast')
-    _station_handler = Config.get_collection_handler('station')
-    _forecast_stations = _station_handler.find({'has_forecast': True})
-    _last_update_handler = Config.get_collection_handler('last_update')
+class FeatureTypeError(Exception):
+    """
+    Raised if time is not matched!
+    TODO: to be done
+    """
+    pass
 
-    @classmethod
-    def fetch_forecast_of_site(self, station_code):
+
+class DataFetcher():
+    url = 'http://envf.ust.hk/dataview/obs4lstm/current/'
+    """
+    TODO:
+    AQs, metes,AQ_folder,mete_folder should be find in a config file
+    """
+    "----------------------------------------------------------------------"
+    AQs = ['NO2', 'O3', 'SO2', 'CO', 'PM25', 'PM10']
+    metes = ['Temp', 'RH', 'Wind', 'Pressure-Station', 'Pressure-SeaLevel', 'DewPt', 'CloudCover']
+    AQ_folder = '/home/hsbc/data/realtime/AQ/'
+    mete_folder = '/home/hsbc/data/realtime/mete/'
+    AQ_folder = AQ_folder + 'hourly/'
+    mete_folder = mete_folder + 'hourly/'
+    "----------------------------------------------------------------------END"
+
+    """Database operation"""
+    "----------------------------------------------------------------------"
+    #     ['AQ_pred_history', 'mete_pred_history']
+    db = MongoClient('127.0.0.1', 27017)['HSBC_realtime_prediction']
+    meteorology_collection_history = db['mete_pred_history']
+    aq_collection_history = db['AQ_pred_history']
+    "----------------------------------------------------------------------END"
+
+    def __init__(self):
+        pass
+
+    def _dump_data(self, feature_type, start_time, end_time, data):
         """
-        Fetch forecast data of station with station_code
-        :param station_code: code of station, should be of string type, specified in forecast_station_config
-        :return: forecast data of the site
+        Construct an url used to fetch data from ENVF
+        @params:
+            feature_type: air pollutant or meteorology(string);
+            start_time/end_time: the four time format defined   
+                                    time_format_compact: "201805310000"
+                                    time_format_standard = "2017-01-02 11:00:00"   
+                                    time_format_seconds = 1451577600.0
+                                    time_format_url = "20180531-0000"
         """
-        station_code = station_code.upper()
 
-        path = 'http://maps.weather.gov.hk/ocf/dat/' + station_code + '.xml'
+        _folder = self.AQ_folder if feature_type in self.AQs else self.mete_folder
+        filename = _folder + '{}_{}_{}.csv'.format(feature_type, format_time(start_time, 'url'),
+                                                   format_time(end_time, 'url'))
 
-        response = utils.safe_open_url(path)
-        if isinstance(response, str):
-            return response
-        data = utils.parse_json_file(response)
-        return data
+        with open(filename, 'wb') as input_file:
+            input_file.write(data)
+        # print(filename, 'finished!')
+        return filename
 
-    @classmethod
-    def fetch_forecast_data(self):
+    def _construct_fetch_url(self, feature_type, start_time, end_time):
         """
-        Fetch forecast weather data for all stations
-        :return: a list of all fetched data, elements could be error code string or data dict
+        Construct an url used to fetch data from ENVF
+        @params:
+            feature_type: air pollutant or meteorology(string);
+            start_time/end_time: the four time format defined   
+                                    time_format_compact: "201805310000"
+                                    time_format_standard = "2017-01-02 11:00:00"   
+                                    time_format_seconds = 1451577600.0
+                                    time_format_url = "20180531-0000"
         """
-        stations = self._forecast_stations
-        data_list = []
-        num = 0
-        for station in stations:
-            data_list.append(self.fetch_forecast_of_site(station['station_code']))
-            if not isinstance(data_list[-1], str):
-                num += 1
-        if(num == 0):
-            return '404'
-        tm = str(data_list[0]['LastModified'])
-        self._logger.info('Forecast data of ' + str(num) + '/16 stations at time ' + tm + ' are fetched.')
-        
-        return self.reformatting_raw_forecast_data(data_list)
+        start_time = format_time(start_time, 'url')
+        end_time = format_time(end_time, 'url')
+        if start_time == None or end_time == None:
+            return None
+        _url = self.url + '?start_time={}&end_time={}&type={}'.format(start_time, end_time, feature_type)
+        return _url
 
-    @classmethod
-    def reformatting_raw_forecast_data(self, raw_data):
+    def check_file_exists(self, feature_type, start_time, end_time):
         """
-        Deprecated. Reformatting the raw forecast data fetched by fetch_forecast_data()
-        :return: a list of reformatted forecast data
+        Check if the downloaded files exist in the folder
+        TODO: if necessary
+        @params: 
+            feature_type: air pollutant or meteorology(string);
+            start_time/end_time: 2017-01-02 11:00:00      
         """
-        if isinstance(raw_data, str):
-            return raw_data
+        pass
 
-        for raw in raw_data:
-            key_list = ['Latitude', 'Longitude', 'ModelTime', 'DailyForecast']
-            for key in key_list:
-                _s_key = utils.camel2snake(key)
-                raw[_s_key] = raw.pop(key)
-            raw['stn'] = raw.pop('StationCode')
-            raw['hourly_forecast'] = raw.pop('HourlyWeatherForecast')
-            # raw['time'] = str(raw.pop('LastModified'))[:12] # cut to YYYYmmddHHMM
-            raw_time = time.strptime(str(raw.pop('LastModified'))[:12], "%Y%m%d%H%M%S")
+    def fetch_data(self, feature_type, start_time, end_time):
 
-            raw['time'] = time.strftime("%Y-%m-%d %H:%M:%S", raw_time)
-
-            raw_daily = raw['daily_forecast']
-            raw_hourly = raw['hourly_forecast']
-
-            # turn keys in daily forecast into snake case
-            daily_key_list = [name for name in raw_daily[0]]
-            s_daily_key_list = [utils.camel2snake(name) for name in daily_key_list]
-            for onedaily in raw_daily:
-                for i, key in enumerate(s_daily_key_list):
-                    onedaily[key] = onedaily.pop(daily_key_list[i])
-
-            # turn keys in hourly forecast into snake case
-            hourly_key_list = [name for name in raw_hourly[0]]
-            s_hourly_key_list = [utils.camel2snake(name) for name in hourly_key_list]
-            formatted_hourly = []
-            hourly_weather_forecast = []
-            for onehourly in raw_hourly:
-                # deal with some incomplete data
-                if len(onehourly) > 4:
-                    _dict = {}
-                    for i, key in enumerate(s_hourly_key_list):
-                        _dict[key] = onehourly[hourly_key_list[i]]
-                    formatted_hourly.append(_dict)
-                if len(onehourly) != 5:
-                    key_list = ['ForecastWeather', 'ForecastHour']
-                    _temp = {utils.camel2snake(key): onehourly[key] for key in key_list}
-                    hourly_weather_forecast.append(_temp)
-            raw['hourly_forecast'] = formatted_hourly
-            raw['hourly_weather_forecast'] = hourly_weather_forecast
-
-        return raw_data
-
-    @classmethod
-    def fetch_and_store_weather_data(self, forecast=False):
         """
-        Fetch and store weather data from the maps.weather.gov.hk
-        :param forecast: indicating forecast or not
-        :return: 1 if error in fetching data, 0 if function succeed
+        Fetch data from url given by ENVF
+        @params: 
+            feature_type: air pollutant or meteorology(string);
+            start_time/end_time: the four time format defined   
+                                    time_format_compact: "201805310000"
+                                    time_format_standard = "2017-01-02 11:00:00"   
+                                    time_format_seconds = 1451577600.0
+                                    time_format_url = "20180531-0000"
         """
-        collection_str = 'current'
-        collection_handler = None
-        data_list = None
-        if not forecast:
-            collection_str = 'forecast'
-            data_list = self.fetch_full_weather_data()
-            collection_handler = self._current_weather_handler
+        st = time.time()
+        if feature_type not in self.AQs and feature_type not in self.metes:
+            raise FeatureTypeError('Feature ' + feature_type + ' is invalid')
+
+        _url = self._construct_fetch_url(feature_type, start_time, end_time)
+
+        try:
+            response = urllib.request.urlopen(_url)
+        except HTTPError as e:
+            data = str(e.code)
+            print('HTTPError = ' + data + '. DataFetcher!')
+        except URLError as e:
+            data = str(e.reason)
+            print('URLError = ' + data + '. DataFetcher!')
         else:
-            data_list = self.fetch_forecast_data()
-            collection_handler = self._forecast_weather_handler
-        
-        if isinstance(data_list, str):
-            self._logger.error("Unable to fetch " + collection_str + " weather data.")
-            return ERROR_FETCH
-        self._logger.info(collection_str + " weather data fetched.")
+            data = response.read()
+            file_path = self._dump_data(feature_type, start_time, end_time, data)
+            self._input_file_db(file_path, feature_type)
+            print('Finish process ', feature_type, start_time, end_time, time.time() - st)
 
-        if self._update_time(data_list[0]['time'], forecast):
-            collection_handler.insert_many(data_list)
-            self._logger.info("database updated successfully with " + collection_str + " weather data.")
+    def _input_file_db(self, file_path, feature_type):
+        if feature_type in self.AQs:
+            _collection = self.aq_collection_history
+        elif feature_type in self.metes:
+            _collection = self.meteorology_collection_history
         else:
-            self._logger.info(collection_str + " datasets are the newest, no need to update.")
+            print('Wrong in feature_type: ', feature_type)
 
-        return SUCCESS
+        group = []
+        with open(file_path, 'r') as input_file:
+            input_file.readline()
+            line = input_file.readline()
+            if not line:
+                return
+            while line:
+                try:
+                    line_segs = line.split(',')
+                    loc_segs = [float(_e[1:-1]) if _e.startswith('"') else float(_e) for _e in line_segs[:2]]
+                    time_segs = [_e[1:-1] if _e.startswith('"') else _e for _e in line_segs[3:5]]
+                    time_str = ' '.join(time_segs)
+                    sec_time = time.mktime(time.strptime(time_str, "%Y-%m-%d %H:%M:%S"))
 
-        
-    @classmethod
-    def fetch_full_weather_data(self):
+                    val = float(line_segs[6])
+                    _dict = {'type': feature_type,
+                             'time': sec_time,
+                             'loc': loc_segs,
+                             'val': val,
+                             'rid': '_'.join([feature_type, str(int(sec_time))] + [str(c) for c in loc_segs])}
+
+                    if feature_type == 'Wind' or feature_type == 'AQI':
+                        val2 = float(line_segs[7])
+                        _dict['val2'] = val2
+                    _collection.update_one({'rid': _dict['rid']}, {'$set': _dict}, upsert=True)
+
+                # print(_dict)
+                #                     group.append(_dict)
+                #                     if len(group) >= 100000:
+                #                         collection.insert_many(group)
+                #                         group = []
+
+                except Exception as e:
+                    print('Something error', e)
+
+                line = input_file.readline()
+
+                #             if len(group) != 0:
+                #                 print('group')
+                #                 print(group)
+                # #                 collection.insert_many(group)
+                #                 group = []
+
+    def fetch_all_features(self, start_time='2018-05-11 00:00:00', end_time='2018-05-11 01:00:00'):
         """
-        Fectch weather data through another source from maps.weather.gov.hk
-        :return:  a list of all fetched data, elements could be error code string or data dict
+        Download the 
+        TODO: if necessary
+        @params: 
+            feature_type: air pollutant or meteorology(string);
+            start_time/end_time: 2017-01-02 11:00:00      
         """
-        # stations = self._full_station_config['Stations']
-        path = "http://maps.weather.gov.hk/r4/input_files/latestReadings_AWS1"
-        response = utils.safe_open_url(path)
-        if isinstance(response, str):
-            return response
-        raw = utils.parse_csv_file(response)
+        for aq in self.AQs:
+            self.fetch_data(aq, start_time, end_time)
+        for mete in self.metes:
+            self.fetch_data(mete, start_time, end_time)
 
-        # pre-processing
-        title = raw[0][0].split()
-        timestr = title[4] + '-' + title[8] + '-' + title[9] + '-' + title[10]
-        tm = time.strptime(timestr, '%H:%M-%d-%B-%Y')
-        timestr = time.strftime('%Y-%m-%d %H:%M:%S', tm)
-        data = []
-        for row in raw[2:]:
-            _dict = {}
-            for i, var in enumerate(raw[1]):
-                if len(var) != 0: # and len(row[i])!=0:
-                    var = var.lower()
-                    _dict[var] = row[i]
-            data.append(_dict)
-
-        for row in data:
-            row['has_wind'] = False if row['winddirection'] == '' else True
-            row['has_temp'] = False if row['temp'] == '' else True
-            row['has_rh'] = False if row['rh'] == '' else True
-            row['has_grasstemp'] = False if row['grasstemp'] == '' else True
-            row['has_visibility'] = False if row['visibility'] == '' else True
-            row['has_pressure'] = False if row['pressure'] == '' else True
-            row['time'] = timestr
-        return data
-
-    # @classmethod
-    # def _create_db_handler(self):
-    #     """
-    #     Create a database handler
-    #     :return: a handler for the database
-    #     """
-    #     weather_db = self._db_config['weather_db']
-    #     return mongodb.MongoDB(weather_db['db_name'], weather_db['host'], weather_db['port'])
-
-    @classmethod
-    def _update_time(self, time_str, forecast = False):
-        print('time', time_str)
-        """
-        use a formatted time string to update record time. return false if not need to update
-        :param time_str: a string with format "YYYYmmddHHmm..."
-        :param forecast: False if not forecast.
-        :return: Boolean
-        """
-        time_str = str(time_str)[:12] + '00'
-        collection_handler = Config.get_collection_handler('last_update')
-        collection_name = ''
-        if forecast:
-            collection_name = Config.get_collection_name('forecast')
-        else:
-            collection_name = Config.get_collection_name('current')
-        last_record = collection_handler.find_one({'collection_name':collection_name})
-        last_update = last_record['last_update_time']
-        if time_str != last_update:
-            collection_handler.update_one({'collection_name':collection_name}, {'$set': {'last_update_time': time_str}})
-            return True
-        return False
-
-    # @classmethod
-    # def _need_update(self, time_str, forecast = False):
-    #     """
-    #     use a formatted time string to update record time. return false if not need to update
-    #     :param time_str: a string with format "YYYYmmddHHmm..."
-    #     :param forecast: False if not forecast.
-    #     :return: Boolean
-    #     """
-    #     time_str = str(time_str)
-    #     if forecast:
-    #         prefix = time_str[:10]
-    #         if prefix != self.update_time_forecast:
-    #             return True
-    #     else:
-    #         prefix = time_str[:12]
-    #         if prefix != self.update_time:
-    #             return True
-    #     return False
-
-    #     @classmethod
-    # def fetch_weather_data_of_site(self, grid_id):
-    #     """
-    #     Deprecated. Fetch weather data of a site by the site's grid_id from hko
-    #     :param grid_id: grid id of a station, you can find the grid id in the station_config.json file
-    #     :return:
-    #         a dict containing weather data, if return a string, it means an error occurs when requesting data
-    #     """
-    #     if not isinstance(grid_id, str):
-    #         grid_id = str(grid_id)
-    #         if len(grid_id) == 3:
-    #             grid_id = '0'+grid_id
-    #     try:
-    #         assert grid_id.isdigit()
-    #     except AssertionError:
-    #         self._logger.error('grid_id should be digital from 0 to 9')
-
-    #     path = 'http://www.hko.gov.hk/PDADATA/locspc/data/gridData/' + grid_id + '_en.xml'
-
-    #     try:
-    #         response = urllib.request.urlopen(path)
-    #     except HTTPError as e:
-    #         data = str(e.code)
-    #         self._logger.error('HTTPError = ' + data + '. Check grid_id!')
-    #     except URLError as e:
-    #         data = str(e.reason)
-    #         self._logger.error('URLError = ' + data)
-    #     else:
-    #         data = utils.parse_json_file(response)
-    #     return data
-
-    # @classmethod
-    # def fetch_weather_data(self):
-    #     """
-    #     Deprecated. Fetch weather data for all stations
-    #     :return: a list of all fetched data, elements could be error code string or data dict
-    #     """
-    #     stations = self._station_config['service_content']['station_details']
-    #     data_list = []
-    #     num = 0
-    #     for station in stations:
-    #         data = self.fetch_weather_data_of_site(station['gridID'])
-    #         data_list.append(data)
-    #         if not isinstance(data_list[-1], str):
-    #             num += 1
-    #     tm = str(data_list[0]['RegionalWeather']['ObsTime'])
-    #     self._logger.info('Weather data of ' + str(num) + '/34 stations at time ' + tm + ' are fetched.')
-    #     return data_list
-
-
-if __name__ == '__main__':
-    # log_to_file('./weather.log')
-    # a = fetch_full_weather_data()
-    # # fecth_weather_data_of_site(2207)
-    # data_list = fetch_weather_data()
-    # print(a)
-    WeatherFetcher.fetch_and_store_weather_data(True)
