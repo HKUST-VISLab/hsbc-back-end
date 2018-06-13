@@ -90,7 +90,7 @@ class TSMFetcher:
         finally:
                 return records
 
-    def fetch_TSM_save_links_file(self, start_date='20171001', relative_path='../../data/tsm_link/'):
+    def fetch_TSM_save_links_file(self, start_date='20180101', relative_path='../../data/tsm_link/'):
         """
         Save the xml links to local files for everyday from start date
         :param start_date: start date in 'yyyymmdd' format
@@ -227,8 +227,8 @@ class TSMFetcher:
         :return:
         """
 
-        xml_folder_path = os.path.join(self.current_path, '../../data/tsm_xml/')
-        link_folder_path = os.path.join(self.current_path, '../../data/tsm_link/')
+        xml_folder_path = os.path.join(self.current_path, '../../../../data/full_tsm_xml/')
+        link_folder_path = os.path.join(self.current_path, '../../../../data/full_tsm_link/')
 
         # Read link files in link folder
         os.chdir(link_folder_path)
@@ -385,11 +385,14 @@ class TSMFetcher:
 
 if __name__ == '__main__':
     tsm_fetcher = TSMFetcher()
-    # print(tsm_fetcher.find_recent_records())
-
-    # Store all new TSM data from 2016-12-01
-    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20180501', '../../../../data/full_tsm_link/')
+    # Collect new TSM data from 2018-01-01
+    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20180101', '../../../../data/full_tsm_link/')
+    # Store into databse with 30-minute gap
+    tsm_fetcher.fetch_TSM_xml_from_link_file(new_file_list, False, True)
+    # Store all xml traffic data to local files
     tsm_fetcher.fetch_all_TSM_xml_from_link_file(new_file_list, True, False)
+
+    print(tsm_fetcher.find_recent_records())
 
     """
     # Traverse existing files
@@ -400,10 +403,3 @@ if __name__ == '__main__':
             exist_file_list = files
     tsm_fetcher.fetch_TSM_xml_from_link_file(exist_file_list, True, True)
     """
-
-    # tsm_fetcher.fetch_and_store()
-
-    # records = tsm_fetcher.find_recent_records()
-    # records2 = tsm_fetcher.fetch_TSM_data()
-    # result = tsm_fetcher.time_cover(records, records2)
-    # print(result)
