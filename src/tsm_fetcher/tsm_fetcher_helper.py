@@ -386,13 +386,13 @@ class TSMFetcher:
 if __name__ == '__main__':
     tsm_fetcher = TSMFetcher()
     # Collect new TSM data from 2018-01-01
-    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20180101', '../../../../data/full_tsm_link/')
+    new_file_list = tsm_fetcher.fetch_TSM_save_links_file('20180501', '../../../../data/full_tsm_link/')
     # Store into databse with 30-minute gap
     tsm_fetcher.fetch_TSM_xml_from_link_file(new_file_list, False, True)
     # Store all xml traffic data to local files
     tsm_fetcher.fetch_all_TSM_xml_from_link_file(new_file_list, True, False)
 
-    print(tsm_fetcher.find_recent_records())
+    print(tsm_fetcher.find_latest_record())
 
     """
     # Traverse existing files
