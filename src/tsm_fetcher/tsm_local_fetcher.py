@@ -96,36 +96,44 @@ class TSMLocalFetcher:
                     closest_seconds_time = 0.0
                     for index, line in enumerate(line_list[1:]):
                         if index >= search_start_index:
-                            date_time_string = csv_path[-12:-4] + ' ' + line.split(',')[1]
-                            seconds_of_line_time = time.mktime(time.strptime(date_time_string, '%Y%m%d %H:%M:%S'))
-                            # print(seconds_of_line_time)
-                            gap = abs(seconds_of_line_time - seconds_of_each_interval)
-                            if gap < smallest_gap:
-                                smallest_gap = gap
-                                search_start_index = index
-                                closest_line = line
-                                closest_seconds_time = seconds_of_line_time
+                            line_segments = line.split(',')
+                            if '' in line_segments:
+                                print('Skip invalid data')
+                            else:
+                                date_time_string = csv_path[-12:-4] + ' ' + line_segments[1]
+                                seconds_of_line_time = time.mktime(time.strptime(date_time_string, '%Y%m%d %H:%M:%S'))
+                                # print(seconds_of_line_time)
+                                gap = abs(seconds_of_line_time - seconds_of_each_interval)
+                                if gap < smallest_gap:
+                                    smallest_gap = gap
+                                    search_start_index = index
+                                    closest_line = line
+                                    closest_seconds_time = seconds_of_line_time
                     # Store into database
                     if len(closest_line):
                         line_columns = closest_line.split(',')
                         column_list = line_columns[2:]
                         for r_index in range(len(road_id_list)):
-                            record = {'link_id': road_id_list[r_index],
-                                      'region': all_road_info[road_id_list[r_index]]['region'],
-                                      'road_type': all_road_info[road_id_list[r_index]]['road_type'],
-                                      'traffic_speed': str(round(float(column_list[r_index * 3]))),
-                                      'capture_date': ' '.join(closest_line.split(',')[:2]),
-                                      'fetch_time': current_time,
-                                      'capture_date_1970': closest_seconds_time,
-                                      'fetch_time_1970': seconds_current_time,
-                                      'travel_mins': column_list[r_index * 3 + 2].rstrip()}
-                            if column_list[r_index * 3 + 1] == 'G':
-                                record['road_saturation_level'] = 'TRAFFIC GOOD'
-                            elif column_list[r_index * 3 + 1] == 'R':
-                                record['road_saturation_level'] = 'TRAFFIC BAD'
+                            if '' in column_list[r_index * 3] or '' in column_list[r_index * 3 + 1]:
+                                # Without speed and saturation level
+                                print('Skip invalid data')
                             else:
-                                record['road_saturation_level'] = 'TRAFFIC AVERAGE'
-                            record_list.append(record)
+                                record = {'link_id': road_id_list[r_index],
+                                          'region': all_road_info[road_id_list[r_index]]['region'],
+                                          'road_type': all_road_info[road_id_list[r_index]]['road_type'],
+                                          'traffic_speed': str(round(float(column_list[r_index * 3]))),
+                                          'capture_date': ' '.join(closest_line.split(',')[:2]),
+                                          'fetch_time': current_time,
+                                          'capture_date_1970': closest_seconds_time,
+                                          'fetch_time_1970': seconds_current_time,
+                                          'travel_mins': column_list[r_index * 3 + 2].rstrip()}
+                                if column_list[r_index * 3 + 1] == 'G':
+                                    record['road_saturation_level'] = 'TRAFFIC GOOD'
+                                elif column_list[r_index * 3 + 1] == 'R':
+                                    record['road_saturation_level'] = 'TRAFFIC BAD'
+                                else:
+                                    record['road_saturation_level'] = 'TRAFFIC AVERAGE'
+                                record_list.append(record)
                 self.store_tsm_data(record_list)
         except IOError as err:
             print('File error: ' + str(err))
